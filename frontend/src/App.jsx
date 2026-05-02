@@ -4,12 +4,10 @@ import viteLogo from "./assets/vite.svg";
 import heroImg from "./assets/hero.png";
 import "./App.css";
 
+import JobTrackingPage from './pages/JobTrackingPage'; // Ensure this path is correct
+
 function App() {
-  return (
-    <div>
-      <h1 className="text-3xl font-bold text-blue-500">Hello</h1>
-    </div>
-  );
+  return <JobTrackingPage />;
 }
 
 export default App;
