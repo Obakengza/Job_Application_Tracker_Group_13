@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-
 const POSTS = [
   {
     id: 1,
@@ -206,7 +205,6 @@ function PostCard({ post }) {
         e.currentTarget.style.transform = "translateY(0)";
       }}
     >
-      {/* CARD ROW */}
       <div
         onClick={() => setOpen(!open)}
         style={{
@@ -217,7 +215,6 @@ function PostCard({ post }) {
           cursor: "pointer",
         }}
       >
-        {/* Logo */}
         <div
           style={{
             width: 42, height: 42,
@@ -233,7 +230,6 @@ function PostCard({ post }) {
           NB
         </div>
 
-        {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, color: "#1a1f2e", marginBottom: 4 }}>
             {post.title}
@@ -245,7 +241,6 @@ function PostCard({ post }) {
           </div>
         </div>
 
-        {/* Right */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <AgeBadge age={post.age} tier={post.ageTier} />
           <div
@@ -270,7 +265,6 @@ function PostCard({ post }) {
         </div>
       </div>
 
-      {/* EXPANDED DETAILS */}
       {open && (
         <div
           style={{
@@ -352,168 +346,113 @@ export default function JobPostsPage() {
   );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f7f9fc", fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#f7f9fc", fontFamily: "'DM Sans', sans-serif", padding: "36px 40px" }}>
 
-      {/* SIDEBAR */}
-      <aside style={{
-        width: 220, background: "#fff",
-        borderRight: "1px solid #eef0f5",
-        display: "flex", flexDirection: "column",
-        padding: "32px 0",
-        position: "fixed", height: "100vh", top: 0, left: 0, zIndex: 10,
-      }}>
-        {/* Logo */}
-        <div style={{ padding: "0 24px 32px", display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 32, height: 32, background: "#5bbfbf", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" style={{ width: 18, height: 18 }}>
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-          </div>
-          <span style={{ fontFamily: "'Syne', sans-serif", fontSize: 15, fontWeight: 700, color: "#1a1f2e" }}>Trackr</span>
-        </div>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+        <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 700, color: "#1a1f2e", letterSpacing: "-0.5px" }}>
+          Job Posts
+        </h1>
+        <button style={{
+          display: "flex", alignItems: "center", gap: 8,
+          background: "#5bbfbf", color: "#fff",
+          border: "none", padding: "11px 20px",
+          borderRadius: 10,
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+        }}>
+          + Add New Post
+        </button>
+      </div>
 
-        <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "1.2px", textTransform: "uppercase", color: "#8892a4", padding: "0 24px 12px" }}>
-          Menu
-        </div>
-
-        {[
-          { label: "Dashboard", active: false },
-          { label: "Job Applications", active: false },
-          { label: "Job Posts", active: true },
-          { label: "Profile", active: false },
-        ].map(({ label, active }) => (
-          <div
-            key={label}
-            style={{
-              display: "flex", alignItems: "center", gap: 12,
-              padding: "11px 24px",
-              fontSize: 14, fontWeight: 500,
-              color: active ? "#5bbfbf" : "#8892a4",
-              background: active ? "#e8f7f7" : "transparent",
-              position: "relative",
-              cursor: "pointer",
-            }}
-          >
-            {active && (
-              <div style={{
-                position: "absolute", left: 0, top: 0, bottom: 0,
-                width: 3, background: "#5bbfbf", borderRadius: "0 2px 2px 0",
-              }} />
-            )}
-            {label}
+      {/* Stats */}
+      <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
+        {STATS.map(s => (
+          <div key={s.label} style={{
+            background: "#fff", border: "1.5px solid #eef0f5",
+            borderRadius: 12, padding: "16px 20px",
+            flex: 1, display: "flex", alignItems: "center", gap: 14,
+          }}>
+            <div style={{ width: 38, height: 38, borderRadius: 10, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", color: s.stroke }}>
+              {s.icon}
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "#8892a4", fontWeight: 500, marginBottom: 2 }}>{s.label}</div>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "#1a1f2e" }}>{s.value}</div>
+            </div>
           </div>
         ))}
-      </aside>
+      </div>
 
-      {/* MAIN */}
-      <main style={{ marginLeft: 220, flex: 1, padding: "36px 40px" }}>
-
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 26, fontWeight: 700, color: "#1a1f2e", letterSpacing: "-0.5px" }}>
-            Job Posts
-          </h1>
-          <button style={{
-            display: "flex", alignItems: "center", gap: 8,
-            background: "#5bbfbf", color: "#fff",
-            border: "none", padding: "11px 20px",
-            borderRadius: 10,
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+      {/* Toolbar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <div style={{ position: "relative", flex: 1, maxWidth: 340 }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2"
+            style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15 }}>
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search job title..."
+            style={{
+              width: "100%", padding: "10px 14px 10px 40px",
+              border: "1.5px solid #eef0f5", borderRadius: 10,
+              fontFamily: "'DM Sans', sans-serif", fontSize: 13.5,
+              color: "#1a1f2e", background: "#fff", outline: "none",
+            }}
+          />
+        </div>
+        {["Filter", "Cape Town"].map(label => (
+          <button key={label} style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "9px 16px", border: "1.5px solid #eef0f5",
+            background: "#fff", borderRadius: 10,
+            fontSize: 13, fontWeight: 500, color: "#8892a4", cursor: "pointer",
           }}>
-            + Add New Post
+            {label}
           </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Stats */}
-        <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
-          {STATS.map(s => (
-            <div key={s.label} style={{
-              background: "#fff", border: "1.5px solid #eef0f5",
-              borderRadius: 12, padding: "16px 20px",
-              flex: 1, display: "flex", alignItems: "center", gap: 14,
-            }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center", color: s.stroke }}>
-                {s.icon}
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: "#8892a4", fontWeight: 500, marginBottom: 2 }}>{s.label}</div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700, color: "#1a1f2e" }}>{s.value}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Toolbar */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-          <div style={{ position: "relative", flex: 1, maxWidth: 340 }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2"
-              style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 15, height: 15 }}>
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search job title..."
-              style={{
-                width: "100%", padding: "10px 14px 10px 40px",
-                border: "1.5px solid #eef0f5", borderRadius: 10,
-                fontFamily: "'DM Sans', sans-serif", fontSize: 13.5,
-                color: "#1a1f2e", background: "#fff", outline: "none",
-              }}
-            />
+      {/* Cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {filtered.length > 0 ? (
+          filtered.map(post => <PostCard key={post.id} post={post} />)
+        ) : (
+          <div style={{ textAlign: "center", padding: "48px 0", color: "#8892a4", fontSize: 14 }}>
+            No posts match "{search}"
           </div>
-          {["Filter", "Cape Town"].map(label => (
-            <button key={label} style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "9px 16px", border: "1.5px solid #eef0f5",
-              background: "#fff", borderRadius: 10,
-              fontSize: 13, fontWeight: 500, color: "#8892a4", cursor: "pointer",
-            }}>
-              {label}
-            </button>
-          ))}
-        </div>
+        )}
+      </div>
 
-        {/* Cards */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.length > 0 ? (
-            filtered.map(post => <PostCard key={post.id} post={post} />)
-          ) : (
-            <div style={{ textAlign: "center", padding: "48px 0", color: "#8892a4", fontSize: 14 }}>
-              No posts match "{search}"
-            </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 28 }}>
-          <button style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #eef0f5", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2.5" style={{ width: 13, height: 13 }}><polyline points="15 18 9 12 15 6" /></svg>
+      {/* Pagination */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 28 }}>
+        <button style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #eef0f5", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2.5" style={{ width: 13, height: 13 }}><polyline points="15 18 9 12 15 6" /></svg>
+        </button>
+        {[1, 2].map(n => (
+          <button
+            key={n}
+            onClick={() => setCurrentPage(n)}
+            style={{
+              width: 36, height: 36, borderRadius: 9,
+              border: `1.5px solid ${currentPage === n ? "#5bbfbf" : "#eef0f5"}`,
+              background: currentPage === n ? "#5bbfbf" : "#fff",
+              color: currentPage === n ? "#fff" : "#8892a4",
+              fontSize: 13.5, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            {n}
           </button>
-          {[1, 2].map(n => (
-            <button
-              key={n}
-              onClick={() => setCurrentPage(n)}
-              style={{
-                width: 36, height: 36, borderRadius: 9,
-                border: `1.5px solid ${currentPage === n ? "#5bbfbf" : "#eef0f5"}`,
-                background: currentPage === n ? "#5bbfbf" : "#fff",
-                color: currentPage === n ? "#fff" : "#8892a4",
-                fontSize: 13.5, fontWeight: 600, cursor: "pointer",
-              }}
-            >
-              {n}
-            </button>
-          ))}
-          <span style={{ fontSize: 13, color: "#8892a4", padding: "0 4px" }}>...</span>
-          <button style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #eef0f5", background: "#fff", color: "#8892a4", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>5</button>
-          <button style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #eef0f5", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2.5" style={{ width: 13, height: 13 }}><polyline points="9 18 15 12 9 6" /></svg>
-          </button>
-        </div>
+        ))}
+        <span style={{ fontSize: 13, color: "#8892a4", padding: "0 4px" }}>...</span>
+        <button style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #eef0f5", background: "#fff", color: "#8892a4", fontSize: 13.5, fontWeight: 600, cursor: "pointer" }}>5</button>
+        <button style={{ width: 36, height: 36, borderRadius: 9, border: "1.5px solid #eef0f5", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2.5" style={{ width: 13, height: 13 }}><polyline points="9 18 15 12 9 6" /></svg>
+        </button>
+      </div>
 
-      </main>
     </div>
   );
 }

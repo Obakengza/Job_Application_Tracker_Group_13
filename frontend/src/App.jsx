@@ -4,6 +4,7 @@ import Sidebar from "./components/Sidebar";
 import ProfilePage from "./components/ProfilePage";
 import JobTrackingPage from "./pages/JobTrackingPage";
 import LoginPage from "./pages/LoginPage";
+import JobPostsPage from "./pages/JobPostsPage";
 
 function App() {
   const location = useLocation();
@@ -21,6 +22,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<ProfilePage />} />
           <Route path="/tracking" element={<JobTrackingPage />} />
+          <Route path="/posts" element={<JobPostsPage />} />
         </Routes>
       </div>
     </div>
