@@ -1,18 +1,24 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import Sidebar from "./components/Sidebar";
 import ProfilePage from "./components/ProfilePage";
 import JobTrackingPage from "./pages/JobTrackingPage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
+  const location = useLocation();
+
+  // Don't show sidebar on login page
+  const hideSidebar = location.pathname === "/login";
+
   return (
     <div className="flex">
-      {/* Sidebar - always visible */}
-      <Sidebar />
+      {/* Only show sidebar if not on login page */}
+      {!hideSidebar && <Sidebar />}
 
-      {/* Page content - changes based on URL */}
       <div className="flex-1">
         <Routes>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<ProfilePage />} />
           <Route path="/tracking" element={<JobTrackingPage />} />
         </Routes>
