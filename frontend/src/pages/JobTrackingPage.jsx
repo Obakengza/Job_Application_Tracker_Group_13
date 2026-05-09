@@ -730,55 +730,6 @@ export default function JobTrackingPage() {
         display: "flex",
       }}
     >
-      {/* Sidebar */}
-      <div
-        style={{
-          width: 195,
-          minHeight: "100vh",
-          background: "#f7f7f5",
-          borderRight: "0.5px solid #e0e0de",
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            padding: "20px 20px 16px",
-            fontWeight: 700,
-            fontSize: 14,
-            color: "#1a1a18",
-            borderBottom: "0.5px solid #e8e8e6",
-          }}
-        >
-          ☰
-        </div>
-        {[
-          { label: "Dashboard", icon: "⊞" },
-          { label: "Job Applications", icon: "☰", active: true },
-          { label: "Job Posts", icon: "📋" },
-          { label: "Profile", icon: "👤" },
-        ].map((item) => (
-          <div
-            key={item.label}
-            style={{
-              padding: "11px 20px",
-              fontSize: 13,
-              color: item.active ? "#185FA5" : "#555",
-              background: item.active ? "#E6F1FB" : "none",
-              fontWeight: item.active ? 600 : 400,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              borderLeft: item.active
-                ? "3px solid #185FA5"
-                : "3px solid transparent",
-            }}
-          >
-            <span style={{ fontSize: 13 }}>{item.icon}</span> {item.label}
-          </div>
-        ))}
-      </div>
-
       {/* Main content */}
       <div
         style={{
