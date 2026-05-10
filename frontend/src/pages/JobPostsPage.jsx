@@ -4,34 +4,34 @@ import { apiRequest } from "../api";
 const AGE_STYLES = {
   fresh: { bg: "#e6f7f1", color: "#4caf87", border: "#a8dfc8" },
   recent: { bg: "#e8f7f7", color: "#5bbfbf", border: "#b2e0e0" },
+  week: { bg: "#fffbe6", color: "#c49a00", border: "#f0d870" },
+  old: { bg: "#fff4e0", color: "#f4a535", border: "#f4c06a" },
+  stale: { bg: "#fdeaea", color: "#e05c5c", border: "#f0a0a0" },
 };
-
-function AgeBadge() {
-  const s = AGE_STYLES.recent;
-
-  return (
-    <span
-      style={{
-        background: s.bg,
-        color: s.color,
-        border: `1.5px solid ${s.border}`,
-        padding: "5px 13px",
-        borderRadius: 8,
-        fontSize: 12,
-        fontWeight: 600,
-        whiteSpace: "nowrap",
-      }}
-    >
-      Active
-    </span>
-  );
-}
 
 function PostCard({ post, onApply }) {
   const [open, setOpen] = useState(false);
+  const getPostAge = (date) => {
+    if (!date) return { text: "New", tier: "fresh" };
 
-  const companyName = post.company_name || "Unknown Company";
-  const initials = companyName.substring(0, 2).toUpperCase();
+    const today = new Date();
+    const posted = new Date(date);
+
+    const diffDays = Math.floor((today - posted) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 1) return { text: "1 Day Ago", tier: "fresh" };
+
+    if (diffDays <= 7) return { text: `${diffDays} Days Ago`, tier: "recent" };
+
+    if (diffDays <= 14) return { text: "2 Weeks Ago", tier: "week" };
+
+    if (diffDays <= 21) return { text: "3 Weeks Ago", tier: "old" };
+
+    return { text: "1 Month Ago", tier: "stale" };
+  };
+
+  const age = getPostAge(post.post_date);
+  const s = AGE_STYLES[age.tier] || AGE_STYLES.recent;
 
   return (
     <div
@@ -40,6 +40,17 @@ function PostCard({ post, onApply }) {
         border: "1.5px solid #eef0f5",
         borderRadius: 14,
         overflow: "hidden",
+        transition: "border-color 0.2s, box-shadow 0.2s, transform 0.15s",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "#b2e0e0";
+        e.currentTarget.style.boxShadow = "0 4px 24px rgba(91,191,191,0.1)";
+        e.currentTarget.style.transform = "translateY(-1px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "#eef0f5";
+        e.currentTarget.style.boxShadow = "none";
+        e.currentTarget.style.transform = "translateY(0)";
       }}
     >
       <div
@@ -62,18 +73,19 @@ function PostCard({ post, onApply }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            fontFamily: "'Syne', sans-serif",
             fontSize: 13,
             fontWeight: 700,
             color: "#5bbfbf",
             flexShrink: 0,
           }}
         >
-          {initials}
+          NB
         </div>
-
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
+              fontFamily: "'Syne', sans-serif",
               fontSize: 15,
               fontWeight: 700,
               color: "#1a1f2e",
@@ -82,7 +94,6 @@ function PostCard({ post, onApply }) {
           >
             {post.job_title}
           </div>
-
           <div
             style={{
               fontSize: 12.5,
@@ -92,27 +103,69 @@ function PostCard({ post, onApply }) {
               gap: 6,
             }}
           >
-            <span>{companyName}</span>
-            <span>•</span>
+            <span>{post.company_name || "Unknown Company"}</span>
+            <span
+              style={{
+                width: 3,
+                height: 3,
+                borderRadius: "50%",
+                background: "#8892a4",
+                opacity: 0.5,
+                display: "inline-block",
+              }}
+            />
             <span>{post.location || "No location"}</span>
           </div>
         </div>
-
-        <AgeBadge />
-
         <div
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 7,
-            border: "1.5px solid #eef0f5",
-            background: "#f7f9fc",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            gap: 10,
+            flexShrink: 0,
           }}
         >
-          {open ? "▲" : "▼"}
+          <span
+            style={{
+              background: s.bg,
+              color: s.color,
+              border: `1.5px solid ${s.border}`,
+              padding: "5px 13px",
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            {age.text}
+          </span>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 7,
+              border: "1.5px solid #eef0f5",
+              background: "#f7f9fc",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#8892a4"
+              strokeWidth="2.5"
+              style={{
+                width: 12,
+                height: 12,
+                transform: open ? "rotate(180deg)" : "rotate(0)",
+                transition: "transform 0.2s",
+              }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
         </div>
       </div>
 
@@ -125,6 +178,7 @@ function PostCard({ post, onApply }) {
             display: "flex",
             flexWrap: "wrap",
             gap: 20,
+            alignItems: "flex-start",
           }}
         >
           <div
@@ -136,19 +190,19 @@ function PostCard({ post, onApply }) {
             }}
           >
             {[
-              ["Salary", post.salary || "Not specified"],
+              ["Salary", post.salary],
               ["Work Type", post.employment_type || "Not specified"],
-              ["Work Mode", post.work_mode || "Not specified"],
-              ["Closes", post.deadline_date || "Not specified"],
-              ["Experience", post.experience || "Not specified"],
-              ["Department", post.department || "Not specified"],
-              ["Link", post.application_link || "", true],
+              ["Closes", post.deadline_date || "No deadline"],
+              ["Experience", post.experience],
+              ["Department", post.department],
+              ["Link", post.application_link || "No link", true],
             ].map(([label, value, isLink]) => (
               <div key={label}>
                 <div
                   style={{
                     fontSize: 11,
                     fontWeight: 600,
+                    letterSpacing: "0.6px",
                     textTransform: "uppercase",
                     color: "#8892a4",
                     marginBottom: 3,
@@ -156,12 +210,9 @@ function PostCard({ post, onApply }) {
                 >
                   {label}
                 </div>
-
-                {isLink && value ? (
+                {isLink ? (
                   <a
-                    href={value.startsWith("http") ? value : `https://${value}`}
-                    target="_blank"
-                    rel="noreferrer"
+                    href={`https://${value}`}
                     style={{
                       color: "#5bbfbf",
                       textDecoration: "none",
@@ -169,7 +220,7 @@ function PostCard({ post, onApply }) {
                       fontWeight: 500,
                     }}
                   >
-                    Apply Link
+                    {value}
                   </a>
                 ) : (
                   <div
@@ -179,40 +230,61 @@ function PostCard({ post, onApply }) {
                       color: "#1a1f2e",
                     }}
                   >
-                    {value || "Not available"}
+                    {value}
                   </div>
                 )}
               </div>
             ))}
           </div>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            <button
+              onClick={() => onApply(post)}
+              style={{
+                padding: "8px 16px",
+                background: "#5bbfbf",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Apply
+            </button>
 
-          <button
-            onClick={() => onApply(post)}
-            style={{
-              padding: "8px 16px",
-              background: "#5bbfbf",
-              color: "#fff",
-              border: "1.5px solid #5bbfbf",
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            Apply
-          </button>
+            <button
+              style={{
+                padding: "8px 16px",
+                background: "#fff",
+                color: "#8892a4",
+                border: "1.5px solid #eef0f5",
+                borderRadius: 8,
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Save
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
-
 export default function JobPostsPage() {
   const [posts, setPosts] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [locationFilter, setLocationFilter] = useState("");
 
   useEffect(() => {
     fetchPosts();
+    fetchApplications();
   }, []);
 
   const fetchPosts = async () => {
@@ -223,16 +295,25 @@ export default function JobPostsPage() {
       console.error("Failed to fetch job posts:", error);
     }
   };
-
+  const fetchApplications = async () => {
+    try {
+      const data = await apiRequest("/applications/");
+      setApplications(data);
+    } catch (error) {
+      console.error("Failed to fetch applications:", error);
+    }
+  };
   const handleApply = async (post) => {
     try {
+      console.log("Applying to job:", post.id, post.job_title);
       const statuses = await apiRequest("/statuses/");
+
       const appliedStatus = statuses.find(
         (status) => status.name.toLowerCase() === "applied",
       );
 
       if (!appliedStatus) {
-        alert("Applied status not found. Please add Applied in Django admin.");
+        alert("Applied status not found.");
         return;
       }
 
@@ -248,40 +329,57 @@ export default function JobPostsPage() {
       });
 
       alert("Application created successfully!");
+      fetchApplications();
     } catch (error) {
       console.error("Failed to apply:", error);
-      alert("Could not apply. You may have already applied for this job.");
+      alert("Could not apply. You may have already applied.");
     }
   };
+  const totalPosts = posts.length;
 
-  const filtered = posts.filter((post) =>
-    post.job_title?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const postedThisWeek = posts.filter((post) => {
+    if (!post.post_date) return false;
 
-  const stats = [
-    {
-      label: "Total Posts",
-      value: posts.length,
-      bg: "#e8f7f7",
-      stroke: "#5bbfbf",
-    },
-    {
-      label: "Closing Soon",
-      value: posts.filter((post) => post.deadline_date).length,
-      bg: "#fdeaea",
-      stroke: "#e05c5c",
-    },
+    const today = new Date();
+    const postDate = new Date(post.post_date);
+
+    const diffDays = (today - postDate) / (1000 * 60 * 60 * 24);
+
+    return diffDays <= 7;
+  }).length;
+
+  const closingSoon = posts.filter((post) => {
+    if (!post.deadline_date) return false;
+
+    const today = new Date();
+    const deadline = new Date(post.deadline_date);
+
+    const diffDays = (deadline - today) / (1000 * 60 * 60 * 24);
+
+    return diffDays >= 0 && diffDays <= 14;
+  }).length;
+
+  const STATS = [
+    { label: "Total Posts", value: totalPosts, bg: "#e8f7f7" },
+    { label: "Posted This Week", value: postedThisWeek, bg: "#e6f7f1" },
+    { label: "Applied To", value: applications.length, bg: "#fff4e0" },
+    { label: "Closing Soon", value: closingSoon, bg: "#fdeaea" },
   ];
+  const filtered = posts.filter((p) => {
+    const matchesSearch = p.job_title
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+
+    const matchesLocation = p.location
+      ?.toLowerCase()
+      .includes(locationFilter.toLowerCase());
+
+    return matchesSearch && matchesLocation;
+  });
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f7f9fc",
-        fontFamily: "'DM Sans', sans-serif",
-        padding: "36px 40px",
-      }}
-    >
+    <>
+      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -292,17 +390,19 @@ export default function JobPostsPage() {
       >
         <h1
           style={{
+            fontFamily: "'Syne', sans-serif",
             fontSize: 26,
             fontWeight: 700,
             color: "#1a1f2e",
+            letterSpacing: "-0.5px",
           }}
         >
           Job Posts
         </h1>
       </div>
-
+      {/* Stats */}
       <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
-        {stats.map((s) => (
+        {STATS.map((s) => (
           <div
             key={s.label}
             style={{
@@ -311,50 +411,121 @@ export default function JobPostsPage() {
               borderRadius: 12,
               padding: "16px 20px",
               flex: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
             }}
           >
             <div
               style={{
-                fontSize: 12,
-                color: "#8892a4",
-                fontWeight: 500,
-                marginBottom: 2,
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: s.bg,
               }}
-            >
-              {s.label}
-            </div>
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: "#1a1f2e",
-              }}
-            >
-              {s.value}
+            />
+            <div>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#8892a4",
+                  fontWeight: 500,
+                  marginBottom: 2,
+                }}
+              >
+                {s.label}
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: "#1a1f2e",
+                }}
+              >
+                {s.value}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search job title..."
+      {/* Toolbar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 20,
+        }}
+      >
+        <div style={{ position: "relative", flex: 1, maxWidth: 340 }}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#8892a4"
+            strokeWidth="2"
+            style={{
+              position: "absolute",
+              left: 14,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: 15,
+              height: 15,
+            }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search job title..."
+            style={{
+              width: "100%",
+              padding: "10px 14px 10px 40px",
+              border: "1.5px solid #eef0f5",
+              borderRadius: 10,
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 13.5,
+              color: "#1a1f2e",
+              background: "#fff",
+              outline: "none",
+            }}
+          />
+        </div>
+        <button
           style={{
-            width: "100%",
-            maxWidth: 340,
-            padding: "10px 14px",
+            padding: "9px 16px",
             border: "1.5px solid #eef0f5",
-            borderRadius: 10,
-            fontSize: 13.5,
-            color: "#1a1f2e",
             background: "#fff",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "#8892a4",
+            cursor: "pointer",
+          }}
+        >
+          Filter
+        </button>
+        <input
+          value={locationFilter}
+          onChange={(e) => setLocationFilter(e.target.value)}
+          placeholder="Filter by location"
+          style={{
+            padding: "9px 16px",
+            border: "1.5px solid #eef0f5",
+            background: "#fff",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "#8892a4",
             outline: "none",
           }}
         />
       </div>
 
+      {/* Cards */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.length > 0 ? (
           filtered.map((post) => (
@@ -369,10 +540,103 @@ export default function JobPostsPage() {
               fontSize: 14,
             }}
           >
-            No job posts found.
+            No posts match "{search}"
           </div>
         )}
       </div>
-    </div>
+
+      {/* Pagination */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 6,
+          marginTop: 28,
+        }}
+      >
+        <button
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 9,
+            border: "1.5px solid #eef0f5",
+            background: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#8892a4"
+            strokeWidth="2.5"
+            style={{ width: 13, height: 13 }}
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        {[1, 2].map((n) => (
+          <button
+            key={n}
+            onClick={() => setCurrentPage(n)}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 9,
+              border: `1.5px solid ${currentPage === n ? "#5bbfbf" : "#eef0f5"}`,
+              background: currentPage === n ? "#5bbfbf" : "#fff",
+              color: currentPage === n ? "#fff" : "#8892a4",
+              fontSize: 13.5,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {n}
+          </button>
+        ))}
+        <span style={{ fontSize: 13, color: "#8892a4" }}>...</span>
+        <button
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 9,
+            border: "1.5px solid #eef0f5",
+            background: "#fff",
+            color: "#8892a4",
+            fontSize: 13.5,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          5
+        </button>
+        <button
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 9,
+            border: "1.5px solid #eef0f5",
+            background: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#8892a4"
+            strokeWidth="2.5"
+            style={{ width: 13, height: 13 }}
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+    </>
   );
 }
