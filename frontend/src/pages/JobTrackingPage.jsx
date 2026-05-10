@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { apiRequest } from "../api";
 
 const STATUSES = [
   { id: "applied", label: "Applied", bg: "#E6F1FB", color: "#185FA5" },
@@ -7,173 +8,81 @@ const STATUSES = [
   { id: "rejected", label: "Rejected", bg: "#FCEBEB", color: "#A32D2D" },
 ];
 
-const INITIAL_APPS = [
-  {
-    id: 1,
-    status: "interview",
-    title: "Junior Data Analyst",
-    company: "NEDBANK",
-    date: "12/01/2026",
-    location: "Johannesburg",
-    workType: "Full-time",
-    interviewDate: "15/01/2026",
-    link: "www.nedbank.co.za",
-    note: "",
-  },
-  {
-    id: 2,
-    status: "applied",
-    title: "Business Analyst",
-    company: "NEDBANK",
-    date: "12/01/2026",
-    location: "Cape Town",
-    workType: "Contract",
-    interviewDate: "20/01/2026",
-    link: "www.nedbankrecruit.co.za",
-    note: "",
-  },
-  {
-    id: 3,
-    status: "applied",
-    title: "Junior Data Scientist",
-    company: "NEDBANK",
-    date: "12/01/2026",
-    location: "Durban",
-    workType: "Full-time",
-    interviewDate: "",
-    link: "",
-    note: "",
-  },
-  {
-    id: 4,
-    status: "applied",
-    title: "Junior Sales Analyst",
-    company: "NEDBANK",
-    date: "12/01/2026",
-    location: "Pretoria",
-    workType: "Part-time",
-    interviewDate: "",
-    link: "",
-    note: "",
-  },
-  {
-    id: 5,
-    status: "accepted",
-    title: "Graduate UI/UX Designer",
-    company: "NEDBANK",
-    date: "12/01/2026",
-    location: "Sandton",
-    workType: "Full-time",
-    interviewDate: "18/01/2026",
-    link: "",
-    note: "",
-  },
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest First" },
+  { value: "oldest", label: "Oldest First" },
+  { value: "title_az", label: "Title A–Z" },
+  { value: "title_za", label: "Title Z–A" },
+  { value: "company", label: "Company A–Z" },
+  { value: "interview", label: "Interview Soon" },
 ];
 
 const CARDS_PER_COL = 4;
-const emptyForm = {
-  title: "",
-  company: "",
-  date: "",
-  location: "",
-  workType: "",
-  interviewDate: "",
-  link: "",
-  note: "",
-  status: "applied",
-};
 
-function daysUntil(dateStr) {
-  if (!dateStr) return null;
-  const [d, m, y] = dateStr.split("/");
-  const diff = Math.ceil((new Date(`${y}-${m}-${d}`) - new Date()) / 86400000);
-  return diff >= 0 ? diff : null;
+function normalizeStatus(status) {
+  return String(status || "")
+    .toLowerCase()
+    .replace("interviewed", "interview")
+    .replace("offered", "accepted");
 }
 
-function DateInput({ value, onChange, placeholder }) {
-  const parts = (value || "").split("/");
-  const dd = parts[0] || "";
-  const mm = parts[1] || "";
-  const yyyy = parts[2] || "";
-
-  const update = (newDd, newMm, newYyyy) => {
-    onChange(`${newDd}/${newMm}/${newYyyy}`);
+function mapApplication(app) {
+  return {
+    id: app.id,
+    status: normalizeStatus(app.status_name || app.status?.name || app.status),
+    title: app.job_title || app.job_post_title || `Job Post #${app.job_post}`,
+    company: app.company_name || "Company not shown",
+    date: app.application_date || "",
+    location: app.location || "",
+    workType: app.employment_type || "",
+    interviewDate: app.interview_date || "",
+    link: app.application_link || "",
+    note: app.note || "",
   };
-
-  const inputStyle = {
-    border: "0.5px solid #ddd",
-    borderRadius: 5,
-    padding: "5px 6px",
-    fontSize: 12,
-    background: "#fff",
-    color: "#1a1a18",
-    outline: "none",
-    fontFamily: "inherit",
-    textAlign: "center",
-  };
-  const sep = {
-    fontSize: 14,
-    color: "#aaa",
-    fontWeight: 600,
-    userSelect: "none",
-    lineHeight: 1,
-  };
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-      <input
-        value={dd}
-        maxLength={2}
-        placeholder="DD"
-        onChange={(e) => {
-          const v = e.target.value.replace(/\D/g, "");
-          update(v, mm, yyyy);
-        }}
-        style={{ ...inputStyle, width: 36 }}
-      />
-      <span style={sep}>/</span>
-      <input
-        value={mm}
-        maxLength={2}
-        placeholder="MM"
-        onChange={(e) => {
-          const v = e.target.value.replace(/\D/g, "");
-          update(dd, v, yyyy);
-        }}
-        style={{ ...inputStyle, width: 36 }}
-      />
-      <span style={sep}>/</span>
-      <input
-        value={yyyy}
-        maxLength={4}
-        placeholder="YYYY"
-        onChange={(e) => {
-          const v = e.target.value.replace(/\D/g, "");
-          update(dd, mm, v);
-        }}
-        style={{ ...inputStyle, width: 52 }}
-      />
-    </div>
-  );
 }
 
-function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
+function parseDate(str) {
+  if (!str) return null;
+
+  if (str.includes("-")) {
+    return new Date(str);
+  }
+
+  const [d, m, y] = str.split("/");
+  if (!d || !m || !y) return null;
+  return new Date(`${y}-${m}-${d}`);
+}
+
+function sortCards(cards, sortBy) {
+  const sorted = [...cards];
+
+  switch (sortBy) {
+    case "newest":
+      return sorted.sort(
+        (a, b) => (parseDate(b.date) || 0) - (parseDate(a.date) || 0),
+      );
+    case "oldest":
+      return sorted.sort(
+        (a, b) => (parseDate(a.date) || 0) - (parseDate(b.date) || 0),
+      );
+    case "title_az":
+      return sorted.sort((a, b) => a.title.localeCompare(b.title));
+    case "title_za":
+      return sorted.sort((a, b) => b.title.localeCompare(a.title));
+    case "company":
+      return sorted.sort((a, b) => a.company.localeCompare(b.company));
+    default:
+      return sorted;
+  }
+}
+
+function KanbanCard({ app, onStatusChange }) {
   const [expanded, setExpanded] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ ...app });
-  const days = daysUntil(app.interviewDate);
-  const s = STATUSES.find((x) => x.id === app.status);
-
-  const handleSave = () => {
-    onEdit(form);
-    setEditing(false);
-    setExpanded(false);
-  };
+  const s = STATUSES.find((x) => x.id === app.status) || STATUSES[0];
 
   return (
     <div
       draggable
-      onDragStart={(e) => dragHandlers.onDragStart(e, app.id)}
       style={{
         background: "#fff",
         borderRadius: 10,
@@ -188,7 +97,6 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
       }
       onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
     >
-      {/* Card header */}
       <div style={{ padding: "12px 14px" }}>
         <div
           style={{
@@ -209,6 +117,7 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
           >
             {app.title}
           </span>
+
           <span
             style={{
               background: s.bg,
@@ -226,37 +135,16 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
             {s.label}
           </span>
         </div>
-        <div
-          style={{
-            fontSize: 11,
-            color: "#888",
-            marginBottom: days !== null ? 6 : 0,
-          }}
-        >
-          {app.company} · {app.date}
+
+        <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+          {app.company} · Applied {app.date}
         </div>
-        {days !== null && (
-          <span
-            style={{
-              background: "#FAEEDA",
-              color: "#BA7517",
-              fontSize: 10,
-              borderRadius: 20,
-              padding: "2px 8px",
-              fontWeight: 600,
-            }}
-          >
-            Interview in {days} day{days !== 1 ? "s" : ""}
-          </span>
-        )}
+
         <div
           style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}
         >
           <button
-            onClick={() => {
-              setExpanded((v) => !v);
-              setEditing(false);
-            }}
+            onClick={() => setExpanded((v) => !v)}
             style={{
               background: "none",
               border: "none",
@@ -272,8 +160,7 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
         </div>
       </div>
 
-      {/* Expanded details */}
-      {expanded && !editing && (
+      {expanded && (
         <div
           style={{
             borderTop: "0.5px solid #f0f0ee",
@@ -297,6 +184,7 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
                 {app.location}
               </div>
             )}
+
             {app.workType && (
               <div>
                 <span style={{ color: "#999" }}>Work Type: </span>
@@ -305,174 +193,16 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
             )}
             {app.interviewDate && (
               <div>
-                <span style={{ color: "#999" }}>Interview: </span>
+                <span style={{ color: "#999" }}>Interview Date: </span>
                 {app.interviewDate}
               </div>
             )}
-            {app.link && (
-              <div>
-                <span style={{ color: "#999" }}>Link: </span>
-                <a
-                  href={`https://${app.link}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: "#185FA5", fontSize: 11 }}
-                >
-                  {app.link}
-                </a>
-              </div>
-            )}
-            {app.note && (
-              <div>
-                <span style={{ color: "#999" }}>Note: </span>
-                {app.note}
-              </div>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button
-              onClick={() => setEditing(true)}
-              style={{
-                background: "#E6F1FB",
-                color: "#185FA5",
-                border: "none",
-                borderRadius: 6,
-                padding: "4px 12px",
-                fontSize: 11,
-                cursor: "pointer",
-                fontWeight: 600,
-                fontFamily: "inherit",
-              }}
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => onDelete(app.id)}
-              style={{
-                background: "#FCEBEB",
-                color: "#A32D2D",
-                border: "none",
-                borderRadius: 6,
-                padding: "4px 12px",
-                fontSize: 11,
-                cursor: "pointer",
-                fontWeight: 600,
-                fontFamily: "inherit",
-              }}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Edit form */}
-      {expanded && editing && (
-        <div
-          style={{
-            borderTop: "0.5px solid #f0f0ee",
-            padding: "10px 14px 12px",
-            background: "#fafafa",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              marginBottom: 10,
-            }}
-          >
-            {[
-              { label: "Job Title", key: "title" },
-              { label: "Company", key: "company" },
-              { label: "Location", key: "location" },
-              { label: "Work Type", key: "workType" },
-              { label: "Link", key: "link" },
-              { label: "Note", key: "note" },
-            ].map((f) => (
-              <div key={f.key}>
-                <label
-                  style={{
-                    fontSize: 10,
-                    color: "#999",
-                    display: "block",
-                    marginBottom: 3,
-                  }}
-                >
-                  {f.label}
-                </label>
-                <input
-                  value={form[f.key] || ""}
-                  placeholder={f.placeholder || ""}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, [f.key]: e.target.value }))
-                  }
-                  style={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                    border: "0.5px solid #ddd",
-                    borderRadius: 5,
-                    padding: "5px 8px",
-                    fontSize: 12,
-                    background: "#fff",
-                    color: "#1a1a18",
-                    outline: "none",
-                    fontFamily: "inherit",
-                  }}
-                />
-              </div>
-            ))}
             <div>
-              <label
-                style={{
-                  fontSize: 10,
-                  color: "#999",
-                  display: "block",
-                  marginBottom: 3,
-                }}
-              >
-                Date Applied
-              </label>
-              <DateInput
-                value={form.date}
-                onChange={(v) => setForm((p) => ({ ...p, date: v }))}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  fontSize: 10,
-                  color: "#999",
-                  display: "block",
-                  marginBottom: 3,
-                }}
-              >
-                Interview Date
-              </label>
-              <DateInput
-                value={form.interviewDate}
-                onChange={(v) => setForm((p) => ({ ...p, interviewDate: v }))}
-              />
-            </div>
-            <div>
-              <label
-                style={{
-                  fontSize: 10,
-                  color: "#999",
-                  display: "block",
-                  marginBottom: 3,
-                }}
-              >
-                Status
-              </label>
+              <span style={{ color: "#999" }}>Change Status: </span>
               <select
-                value={form.status}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, status: e.target.value }))
-                }
+                value={app.status}
+                onChange={(e) => onStatusChange(app.id, e.target.value)}
                 style={{
-                  width: "100%",
                   border: "0.5px solid #ddd",
                   borderRadius: 5,
                   padding: "5px 8px",
@@ -483,46 +213,38 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
                   fontFamily: "inherit",
                 }}
               >
-                {STATUSES.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
+                {STATUSES.map((status) => (
+                  <option key={status.id} value={status.id}>
+                    {status.label}
                   </option>
                 ))}
               </select>
             </div>
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button
-              onClick={handleSave}
-              style={{
-                background: "#1a1a18",
-                color: "#fff",
-                border: "none",
-                borderRadius: 6,
-                padding: "4px 14px",
-                fontSize: 11,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontWeight: 600,
-              }}
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setEditing(false)}
-              style={{
-                background: "#f0f0f0",
-                color: "#555",
-                border: "none",
-                borderRadius: 6,
-                padding: "4px 12px",
-                fontSize: 11,
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              Cancel
-            </button>
+
+            {app.link && (
+              <div>
+                <span style={{ color: "#999" }}>Link: </span>
+                <a
+                  href={
+                    app.link.startsWith("http")
+                      ? app.link
+                      : `https://${app.link}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#185FA5", fontSize: 11 }}
+                >
+                  {app.link}
+                </a>
+              </div>
+            )}
+
+            {app.note && (
+              <div>
+                <span style={{ color: "#999" }}>Note: </span>
+                {app.note}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -530,31 +252,24 @@ function KanbanCard({ app, onEdit, onDelete, onStatusChange, dragHandlers }) {
   );
 }
 
-function KanbanColumn({
-  status,
-  cards,
-  search,
-  onEdit,
-  onDelete,
-  onStatusChange,
-  dragHandlers,
-}) {
+function KanbanColumn({ status, cards, search, sortBy, onStatusChange }) {
   const [page, setPage] = useState(1);
+
   const filtered = cards.filter(
     (a) =>
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.company.toLowerCase().includes(search.toLowerCase()),
   );
-  const totalPages = Math.ceil(filtered.length / CARDS_PER_COL);
-  const paginated = filtered.slice(
+
+  const sorted = sortCards(filtered, sortBy);
+  const totalPages = Math.ceil(sorted.length / CARDS_PER_COL);
+  const paginated = sorted.slice(
     (page - 1) * CARDS_PER_COL,
     page * CARDS_PER_COL,
   );
 
   return (
     <div
-      onDrop={(e) => dragHandlers.onDrop(e, status.id)}
-      onDragOver={(e) => e.preventDefault()}
       style={{
         flex: 1,
         minWidth: 220,
@@ -564,7 +279,6 @@ function KanbanColumn({
         border: "0.5px solid #e0e0de",
       }}
     >
-      {/* Column header */}
       <div
         style={{
           display: "flex",
@@ -583,11 +297,13 @@ function KanbanColumn({
             flexShrink: 0,
           }}
         />
+
         <span
           style={{ fontSize: 13, fontWeight: 700, color: "#1a1a18", flex: 1 }}
         >
           {status.label}
         </span>
+
         <span
           style={{
             background: status.bg,
@@ -598,11 +314,10 @@ function KanbanColumn({
             padding: "2px 8px",
           }}
         >
-          {filtered.length}
+          {sorted.length}
         </span>
       </div>
 
-      {/* Cards */}
       <div style={{ minHeight: 60 }}>
         {paginated.length === 0 ? (
           <div
@@ -624,16 +339,12 @@ function KanbanColumn({
             <KanbanCard
               key={app.id}
               app={app}
-              onEdit={onEdit}
-              onDelete={onDelete}
               onStatusChange={onStatusChange}
-              dragHandlers={dragHandlers}
             />
           ))
         )}
       </div>
 
-      {/* Per-column pagination */}
       {totalPages > 1 && (
         <div
           style={{
@@ -659,9 +370,11 @@ function KanbanColumn({
           >
             ‹
           </button>
+
           <span style={{ fontSize: 11, color: "#888" }}>
             {page}/{totalPages}
           </span>
+
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
@@ -684,36 +397,48 @@ function KanbanColumn({
 }
 
 export default function JobTrackingPage() {
-  const [apps, setApps] = useState(INITIAL_APPS);
+  const [apps, setApps] = useState([]);
   const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ ...emptyForm });
-  const [dragId, setDragId] = useState(null);
+  const [sortBy, setSortBy] = useState("newest");
 
-  const handleStatusChange = (id, status) =>
-    setApps((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
-  const handleEdit = (updated) =>
-    setApps((prev) =>
-      prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)),
-    );
-  const handleDelete = (id) =>
-    setApps((prev) => prev.filter((a) => a.id !== id));
-  const handleAdd = () => {
-    if (!form.title || !form.company) return;
-    setApps((prev) => [...prev, { ...form, id: Date.now() }]);
-    setForm({ ...emptyForm });
-    setShowModal(false);
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  const fetchApplications = async () => {
+    try {
+      const data = await apiRequest("/applications/");
+      const mappedApps = data.map(mapApplication);
+      setApps(mappedApps);
+    } catch (error) {
+      console.error("Failed to fetch applications:", error);
+    }
   };
+  const handleStatusChange = async (applicationId, newStatusName) => {
+    try {
+      const statuses = await apiRequest("/statuses/");
 
-  const dragHandlers = {
-    onDragStart: (e, id) => setDragId(id),
-    onDrop: (e, colId) => {
-      e.preventDefault();
-      setApps((prev) =>
-        prev.map((a) => (a.id === dragId ? { ...a, status: colId } : a)),
+      const selectedStatus = statuses.find(
+        (status) => status.name.toLowerCase() === newStatusName.toLowerCase(),
       );
-      setDragId(null);
-    },
+
+      if (!selectedStatus) {
+        alert("Status not found.");
+        return;
+      }
+
+      await apiRequest(`/applications/${applicationId}/`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: selectedStatus.id,
+        }),
+      });
+
+      fetchApplications();
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      alert("Could not update application status.");
+    }
   };
 
   const counts = STATUSES.reduce((acc, s) => {
@@ -727,19 +452,11 @@ export default function JobTrackingPage() {
         minHeight: "100vh",
         background: "#f0f0ee",
         fontFamily: "'Segoe UI', Arial, sans-serif",
-        display: "flex",
       }}
     >
-      {/* Main content */}
       <div
-        style={{
-          flex: 1,
-          padding: "28px 24px 48px",
-          minWidth: 0,
-          overflowX: "auto",
-        }}
+        style={{ padding: "28px 24px 48px", minWidth: 0, overflowX: "auto" }}
       >
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -758,27 +475,10 @@ export default function JobTrackingPage() {
               color: "#1a1a18",
             }}
           >
-            Job Applications
+            Job Tracking Page
           </h1>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{
-              background: "#4DBFA0",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "8px 18px",
-              fontSize: 13,
-              cursor: "pointer",
-              fontWeight: 600,
-              fontFamily: "inherit",
-            }}
-          >
-            ⊕ Add New Application
-          </button>
         </div>
 
-        {/* Status summary pills */}
         <div
           style={{
             display: "flex",
@@ -806,41 +506,87 @@ export default function JobTrackingPage() {
           ))}
         </div>
 
-        {/* Search */}
-        <div style={{ position: "relative", marginBottom: 18, maxWidth: 300 }}>
-          <input
-            type="text"
-            placeholder="Search Job Title"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              boxSizing: "border-box",
-              border: "0.5px solid #ddd",
-              borderRadius: 8,
-              padding: "8px 36px 8px 14px",
-              fontSize: 13,
-              background: "#fff",
-              color: "#1a1a18",
-              outline: "none",
-              fontFamily: "inherit",
-            }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              right: 12,
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#aaa",
-              fontSize: 13,
-            }}
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            marginBottom: 18,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{ position: "relative", flex: "1 1 240px", maxWidth: 300 }}
           >
-            🔍
-          </span>
+            <input
+              type="text"
+              placeholder="Search Job Title"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                border: "0.5px solid #ddd",
+                borderRadius: 8,
+                padding: "8px 36px 8px 14px",
+                fontSize: 13,
+                background: "#fff",
+                color: "#1a1a18",
+                outline: "none",
+                fontFamily: "inherit",
+              }}
+            />
+
+            <span
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#aaa",
+                fontSize: 13,
+              }}
+            >
+              🔍
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span
+              style={{
+                fontSize: 12,
+                color: "#888",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+              }}
+            >
+              Sort by:
+            </span>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                border: "0.5px solid #ddd",
+                borderRadius: 8,
+                padding: "7px 12px",
+                fontSize: 12,
+                background: "#fff",
+                color: "#1a1a18",
+                outline: "none",
+                fontFamily: "inherit",
+                cursor: "pointer",
+              }}
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Kanban board */}
         <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
           {STATUSES.map((status) => (
             <KanbanColumn
@@ -848,227 +594,12 @@ export default function JobTrackingPage() {
               status={status}
               cards={apps.filter((a) => a.status === status.id)}
               search={search}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+              sortBy={sortBy}
               onStatusChange={handleStatusChange}
-              dragHandlers={dragHandlers}
             />
           ))}
         </div>
       </div>
-
-      {/* Add modal */}
-      {showModal && (
-        <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowModal(false);
-          }}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.25)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 14,
-              padding: "28px 28px 24px",
-              width: 440,
-              border: "0.5px solid #e0e0e0",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-              maxHeight: "90vh",
-              overflowY: "auto",
-            }}
-          >
-            <h2
-              style={{
-                margin: "0 0 20px",
-                fontSize: 16,
-                fontWeight: 700,
-                color: "#1a1a18",
-              }}
-            >
-              Add New Application
-            </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px 16px",
-                marginBottom: 14,
-              }}
-            >
-              {[
-                {
-                  label: "Job Title *",
-                  key: "title",
-                  placeholder: "e.g. Data Analyst",
-                },
-                {
-                  label: "Company *",
-                  key: "company",
-                  placeholder: "e.g. Nedbank",
-                },
-                {
-                  label: "Location",
-                  key: "location",
-                  placeholder: "e.g. Cape Town",
-                },
-                {
-                  label: "Work Type",
-                  key: "workType",
-                  placeholder: "e.g. Full-time",
-                },
-                {
-                  label: "Link",
-                  key: "link",
-                  placeholder: "www.company.co.za",
-                },
-                { label: "Note", key: "note", placeholder: "Any notes..." },
-              ].map((f) => (
-                <div key={f.key}>
-                  <label
-                    style={{
-                      fontSize: 11,
-                      color: "#999",
-                      display: "block",
-                      marginBottom: 4,
-                    }}
-                  >
-                    {f.label}
-                  </label>
-                  <input
-                    value={form[f.key] || ""}
-                    placeholder={f.placeholder}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, [f.key]: e.target.value }))
-                    }
-                    style={{
-                      width: "100%",
-                      boxSizing: "border-box",
-                      border: "0.5px solid #ddd",
-                      borderRadius: 6,
-                      padding: "7px 10px",
-                      fontSize: 13,
-                      background: "#fafafa",
-                      color: "#1a1a18",
-                      outline: "none",
-                      fontFamily: "inherit",
-                    }}
-                  />
-                </div>
-              ))}
-              <div>
-                <label
-                  style={{
-                    fontSize: 11,
-                    color: "#999",
-                    display: "block",
-                    marginBottom: 4,
-                  }}
-                >
-                  Date Applied
-                </label>
-                <DateInput
-                  value={form.date}
-                  onChange={(v) => setForm((p) => ({ ...p, date: v }))}
-                />
-              </div>
-              <div>
-                <label
-                  style={{
-                    fontSize: 11,
-                    color: "#999",
-                    display: "block",
-                    marginBottom: 4,
-                  }}
-                >
-                  Interview Date
-                </label>
-                <DateInput
-                  value={form.interviewDate}
-                  onChange={(v) => setForm((p) => ({ ...p, interviewDate: v }))}
-                />
-              </div>
-            </div>
-            <div style={{ marginBottom: 18 }}>
-              <label
-                style={{
-                  fontSize: 11,
-                  color: "#999",
-                  display: "block",
-                  marginBottom: 4,
-                }}
-              >
-                Status
-              </label>
-              <select
-                value={form.status}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, status: e.target.value }))
-                }
-                style={{
-                  width: "100%",
-                  border: "0.5px solid #ddd",
-                  borderRadius: 6,
-                  padding: "7px 10px",
-                  fontSize: 13,
-                  background: "#fafafa",
-                  color: "#1a1a18",
-                  outline: "none",
-                  fontFamily: "inherit",
-                }}
-              >
-                {STATUSES.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div
-              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
-            >
-              <button
-                onClick={() => setShowModal(false)}
-                style={{
-                  background: "#f0f0f0",
-                  color: "#555",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 18px",
-                  fontSize: 13,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAdd}
-                style={{
-                  background: "#1a1a18",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 6,
-                  padding: "8px 20px",
-                  fontSize: 13,
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontWeight: 600,
-                }}
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

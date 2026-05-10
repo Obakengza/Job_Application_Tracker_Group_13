@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from "react";
 
 const POSTS = [
@@ -100,10 +101,15 @@ const POSTS = [
     link: "nedbankrecruit.co.za",
   },
 ];
+=======
+import { useEffect, useState } from "react";
+import { apiRequest } from "../api";
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
 
 const AGE_STYLES = {
   fresh: { bg: "#e6f7f1", color: "#4caf87", border: "#a8dfc8" },
   recent: { bg: "#e8f7f7", color: "#5bbfbf", border: "#b2e0e0" },
+<<<<<<< HEAD
   week: { bg: "#fffbe6", color: "#c49a00", border: "#f0d870" },
   old: { bg: "#fff4e0", color: "#f4a535", border: "#f4c06a" },
   stale: { bg: "#fdeaea", color: "#e05c5c", border: "#f0a0a0" },
@@ -185,9 +191,13 @@ const STATS = [
     ),
   },
 ];
+=======
+};
 
-function AgeBadge({ age, tier }) {
-  const s = AGE_STYLES[tier] || AGE_STYLES.recent;
+function AgeBadge() {
+  const s = AGE_STYLES.recent;
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
+
   return (
     <span
       style={{
@@ -201,13 +211,16 @@ function AgeBadge({ age, tier }) {
         whiteSpace: "nowrap",
       }}
     >
-      {age}
+      Active
     </span>
   );
 }
 
-function PostCard({ post }) {
+function PostCard({ post, onApply }) {
   const [open, setOpen] = useState(false);
+
+  const companyName = post.company_name || "Unknown Company";
+  const initials = companyName.substring(0, 2).toUpperCase();
 
   return (
     <div
@@ -216,6 +229,7 @@ function PostCard({ post }) {
         border: "1.5px solid #eef0f5",
         borderRadius: 14,
         overflow: "hidden",
+<<<<<<< HEAD
         transition: "border-color 0.2s, box-shadow 0.2s, transform 0.15s",
       }}
       onMouseEnter={(e) => {
@@ -227,9 +241,10 @@ function PostCard({ post }) {
         e.currentTarget.style.borderColor = "#eef0f5";
         e.currentTarget.style.boxShadow = "none";
         e.currentTarget.style.transform = "translateY(0)";
+=======
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
       }}
     >
-      {/* CARD ROW */}
       <div
         onClick={() => setOpen(!open)}
         style={{
@@ -240,7 +255,6 @@ function PostCard({ post }) {
           cursor: "pointer",
         }}
       >
-        {/* Logo */}
         <div
           style={{
             width: 42,
@@ -251,16 +265,20 @@ function PostCard({ post }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+<<<<<<< HEAD
             fontFamily: "'Syne', sans-serif",
+=======
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
             fontSize: 13,
             fontWeight: 700,
             color: "#5bbfbf",
             flexShrink: 0,
           }}
         >
-          NB
+          {initials}
         </div>
 
+<<<<<<< HEAD
         {/* Info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
@@ -340,11 +358,53 @@ function PostCard({ post }) {
             >
               <polyline points="6 9 12 15 18 9" />
             </svg>
+=======
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: "#1a1f2e",
+              marginBottom: 4,
+            }}
+          >
+            {post.job_title}
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
           </div>
+
+          <div
+            style={{
+              fontSize: 12.5,
+              color: "#8892a4",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span>{companyName}</span>
+            <span>•</span>
+            <span>{post.location || "No location"}</span>
+          </div>
+        </div>
+
+        <AgeBadge />
+
+        <div
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 7,
+            border: "1.5px solid #eef0f5",
+            background: "#f7f9fc",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {open ? "▲" : "▼"}
         </div>
       </div>
 
-      {/* EXPANDED DETAILS */}
       {open && (
         <div
           style={{
@@ -354,7 +414,6 @@ function PostCard({ post }) {
             display: "flex",
             flexWrap: "wrap",
             gap: 20,
-            alignItems: "flex-start",
           }}
         >
           <div
@@ -366,19 +425,23 @@ function PostCard({ post }) {
             }}
           >
             {[
-              ["Salary", post.salary],
-              ["Work Type", post.workType],
-              ["Closes", post.closes],
-              ["Experience", post.experience],
-              ["Department", post.department],
-              ["Link", post.link, true],
+              ["Salary", post.salary || "Not specified"],
+              ["Work Type", post.employment_type || "Not specified"],
+              ["Work Mode", post.work_mode || "Not specified"],
+              ["Closes", post.deadline_date || "Not specified"],
+              ["Experience", post.experience || "Not specified"],
+              ["Department", post.department || "Not specified"],
+              ["Link", post.application_link || "", true],
             ].map(([label, value, isLink]) => (
               <div key={label}>
                 <div
                   style={{
                     fontSize: 11,
                     fontWeight: 600,
+<<<<<<< HEAD
                     letterSpacing: "0.6px",
+=======
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
                     textTransform: "uppercase",
                     color: "#8892a4",
                     marginBottom: 3,
@@ -386,9 +449,18 @@ function PostCard({ post }) {
                 >
                   {label}
                 </div>
+<<<<<<< HEAD
                 {isLink ? (
                   <a
                     href={`https://${value}`}
+=======
+
+                {isLink && value ? (
+                  <a
+                    href={value.startsWith("http") ? value : `https://${value}`}
+                    target="_blank"
+                    rel="noreferrer"
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
                     style={{
                       color: "#5bbfbf",
                       textDecoration: "none",
@@ -396,7 +468,11 @@ function PostCard({ post }) {
                       fontWeight: 500,
                     }}
                   >
+<<<<<<< HEAD
                     {value}
+=======
+                    Apply Link
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
                   </a>
                 ) : (
                   <div
@@ -406,13 +482,18 @@ function PostCard({ post }) {
                       color: "#1a1f2e",
                     }}
                   >
+<<<<<<< HEAD
                     {value}
+=======
+                    {value || "Not available"}
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
                   </div>
                 )}
               </div>
             ))}
           </div>
 
+<<<<<<< HEAD
           <div
             style={{
               display: "flex",
@@ -458,6 +539,23 @@ function PostCard({ post }) {
               Save
             </button>
           </div>
+=======
+          <button
+            onClick={() => onApply(post)}
+            style={{
+              padding: "8px 16px",
+              background: "#5bbfbf",
+              color: "#fff",
+              border: "1.5px solid #5bbfbf",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Apply
+          </button>
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
         </div>
       )}
     </div>
@@ -465,16 +563,80 @@ function PostCard({ post }) {
 }
 
 export default function JobPostsPage() {
+  const [posts, setPosts] = useState([]);
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
 
+<<<<<<< HEAD
   const filtered = POSTS.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase()),
+=======
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const data = await apiRequest("/job-posts/");
+      setPosts(data);
+    } catch (error) {
+      console.error("Failed to fetch job posts:", error);
+    }
+  };
+
+  const handleApply = async (post) => {
+    try {
+      const statuses = await apiRequest("/statuses/");
+      const appliedStatus = statuses.find(
+        (status) => status.name.toLowerCase() === "applied",
+      );
+
+      if (!appliedStatus) {
+        alert("Applied status not found. Please add Applied in Django admin.");
+        return;
+      }
+
+      await apiRequest("/applications/", {
+        method: "POST",
+        body: JSON.stringify({
+          job_post: post.id,
+          status: appliedStatus.id,
+          application_date: new Date().toISOString().split("T")[0],
+          employment_type: post.employment_type || "Not specified",
+          work_mode: post.work_mode || "Not specified",
+        }),
+      });
+
+      alert("Application created successfully!");
+    } catch (error) {
+      console.error("Failed to apply:", error);
+      alert("Could not apply. You may have already applied for this job.");
+    }
+  };
+
+  const filtered = posts.filter((post) =>
+    post.job_title?.toLowerCase().includes(search.toLowerCase()),
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
   );
+
+  const stats = [
+    {
+      label: "Total Posts",
+      value: posts.length,
+      bg: "#e8f7f7",
+      stroke: "#5bbfbf",
+    },
+    {
+      label: "Closing Soon",
+      value: posts.filter((post) => post.deadline_date).length,
+      bg: "#fdeaea",
+      stroke: "#e05c5c",
+    },
+  ];
 
   return (
     <div
       style={{
+<<<<<<< HEAD
         display: "flex",
         minHeight: "100vh",
         background: "#f7f9fc",
@@ -558,9 +720,39 @@ export default function JobPostsPage() {
           { label: "Job Posts", active: true },
           { label: "Profile", active: false },
         ].map(({ label, active }) => (
+=======
+        minHeight: "100vh",
+        background: "#f7f9fc",
+        fontFamily: "'DM Sans', sans-serif",
+        padding: "36px 40px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 28,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: 26,
+            fontWeight: 700,
+            color: "#1a1f2e",
+          }}
+        >
+          Job Posts
+        </h1>
+      </div>
+
+      <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
+        {stats.map((s) => (
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
           <div
-            key={label}
+            key={s.label}
             style={{
+<<<<<<< HEAD
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -868,6 +1060,75 @@ export default function JobPostsPage() {
           </button>
         </div>
       </main>
+=======
+              background: "#fff",
+              border: "1.5px solid #eef0f5",
+              borderRadius: 12,
+              padding: "16px 20px",
+              flex: 1,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 12,
+                color: "#8892a4",
+                fontWeight: 500,
+                marginBottom: 2,
+              }}
+            >
+              {s.label}
+            </div>
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: "#1a1f2e",
+              }}
+            >
+              {s.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search job title..."
+          style={{
+            width: "100%",
+            maxWidth: 340,
+            padding: "10px 14px",
+            border: "1.5px solid #eef0f5",
+            borderRadius: 10,
+            fontSize: 13.5,
+            color: "#1a1f2e",
+            background: "#fff",
+            outline: "none",
+          }}
+        />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {filtered.length > 0 ? (
+          filtered.map((post) => (
+            <PostCard key={post.id} post={post} onApply={handleApply} />
+          ))
+        ) : (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "48px 0",
+              color: "#8892a4",
+              fontSize: 14,
+            }}
+          >
+            No job posts found.
+          </div>
+        )}
+      </div>
+>>>>>>> eee04d7406b7cd3abfa778c1253c0fdaf19449a0
     </div>
   );
 }

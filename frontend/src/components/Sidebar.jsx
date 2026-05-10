@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 
 function Sidebar() {
-  // This tells us which page we're currently on
   const location = useLocation();
 
   return (
@@ -24,6 +23,14 @@ function Sidebar() {
           ${location.pathname === "/tracking" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
       >
         Job Tracking
+      </Link>
+
+      <Link
+        to="/posts"
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+          ${location.pathname === "/posts" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
+      >
+        Job Posts
       </Link>
     </div>
   );
