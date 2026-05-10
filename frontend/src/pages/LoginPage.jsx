@@ -19,8 +19,33 @@ function LoginPage() {
 
   const navigate = useNavigate();
 
-  const handleSignIn = () => {
-    navigate("/");
+  const handleSignIn = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: signInForm.email,
+          password: signInForm.password,
+        }),
+      });
+
+      if (!response.ok) {
+        alert("Invalid login details");
+        return;
+      }
+
+      const data = await response.json();
+
+      localStorage.setItem("token", data.token);
+
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong during login");
+    }
   };
 
   const handleSignUp = () => {
