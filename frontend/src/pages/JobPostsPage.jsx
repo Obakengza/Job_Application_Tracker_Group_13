@@ -9,29 +9,25 @@ const AGE_STYLES = {
   stale: { bg: "#fdeaea", color: "#e05c5c", border: "#f0a0a0" },
 };
 
+function getPostAge(postDate) {
+  if (!postDate) return { age: "Active", ageTier: "recent" };
+
+  const today = new Date();
+  const posted = new Date(postDate);
+  const diffDays = Math.floor((today - posted) / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 1) return { age: "1 Day Ago", ageTier: "fresh" };
+  if (diffDays <= 7) return { age: `${diffDays} Days Ago`, ageTier: "recent" };
+  if (diffDays <= 14) return { age: "2 Weeks Ago", ageTier: "week" };
+  if (diffDays <= 21) return { age: "3 Weeks Ago", ageTier: "old" };
+
+  return { age: "4 Weeks Ago", ageTier: "stale" };
+}
+
 function PostCard({ post, onApply }) {
   const [open, setOpen] = useState(false);
-  const getPostAge = (date) => {
-    if (!date) return { text: "New", tier: "fresh" };
-
-    const today = new Date();
-    const posted = new Date(date);
-
-    const diffDays = Math.floor((today - posted) / (1000 * 60 * 60 * 24));
-
-    if (diffDays <= 1) return { text: "1 Day Ago", tier: "fresh" };
-
-    if (diffDays <= 7) return { text: `${diffDays} Days Ago`, tier: "recent" };
-
-    if (diffDays <= 14) return { text: "2 Weeks Ago", tier: "week" };
-
-    if (diffDays <= 21) return { text: "3 Weeks Ago", tier: "old" };
-
-    return { text: "1 Month Ago", tier: "stale" };
-  };
-
-  const age = getPostAge(post.post_date);
-  const s = AGE_STYLES[age.tier] || AGE_STYLES.recent;
+  const ageInfo = getPostAge(post.post_date);
+  const s = AGE_STYLES[ageInfo.ageTier] || AGE_STYLES.recent;
 
   return (
     <div
@@ -80,8 +76,9 @@ function PostCard({ post, onApply }) {
             flexShrink: 0,
           }}
         >
-          NB
+          {(post.company_name || "NA").substring(0, 2).toUpperCase()}
         </div>
+
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -117,6 +114,7 @@ function PostCard({ post, onApply }) {
             <span>{post.location || "No location"}</span>
           </div>
         </div>
+
         <div
           style={{
             display: "flex",
@@ -136,7 +134,7 @@ function PostCard({ post, onApply }) {
               fontWeight: 600,
             }}
           >
-            {age.text}
+            {ageInfo.age}
           </span>
           <div
             style={{
@@ -190,11 +188,11 @@ function PostCard({ post, onApply }) {
             }}
           >
             {[
-              ["Salary", post.salary],
+              ["Salary", post.salary || "Not specified"],
               ["Work Type", post.employment_type || "Not specified"],
               ["Closes", post.deadline_date || "No deadline"],
-              ["Experience", post.experience],
-              ["Department", post.department],
+              ["Experience", post.experience || "Not specified"],
+              ["Department", post.department || "Not specified"],
               ["Link", post.application_link || "No link", true],
             ].map(([label, value, isLink]) => (
               <div key={label}>
@@ -210,9 +208,11 @@ function PostCard({ post, onApply }) {
                 >
                   {label}
                 </div>
-                {isLink ? (
+                {isLink && value !== "No link" ? (
                   <a
-                    href={`https://${value}`}
+                    href={value.startsWith("http") ? value : `https://${value}`}
+                    target="_blank"
+                    rel="noreferrer"
                     style={{
                       color: "#5bbfbf",
                       textDecoration: "none",
@@ -236,6 +236,7 @@ function PostCard({ post, onApply }) {
               </div>
             ))}
           </div>
+
           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
             <button
               onClick={() => onApply(post)}
@@ -275,12 +276,13 @@ function PostCard({ post, onApply }) {
     </div>
   );
 }
+
 export default function JobPostsPage() {
   const [posts, setPosts] = useState([]);
   const [applications, setApplications] = useState([]);
   const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [locationFilter, setLocationFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchPosts();
@@ -295,6 +297,7 @@ export default function JobPostsPage() {
       console.error("Failed to fetch job posts:", error);
     }
   };
+
   const fetchApplications = async () => {
     try {
       const data = await apiRequest("/applications/");
@@ -303,11 +306,10 @@ export default function JobPostsPage() {
       console.error("Failed to fetch applications:", error);
     }
   };
+
   const handleApply = async (post) => {
     try {
-      console.log("Applying to job:", post.id, post.job_title);
       const statuses = await apiRequest("/statuses/");
-
       const appliedStatus = statuses.find(
         (status) => status.name.toLowerCase() === "applied",
       );
@@ -335,27 +337,22 @@ export default function JobPostsPage() {
       alert("Could not apply. You may have already applied.");
     }
   };
+
   const totalPosts = posts.length;
 
   const postedThisWeek = posts.filter((post) => {
     if (!post.post_date) return false;
-
     const today = new Date();
     const postDate = new Date(post.post_date);
-
     const diffDays = (today - postDate) / (1000 * 60 * 60 * 24);
-
     return diffDays <= 7;
   }).length;
 
   const closingSoon = posts.filter((post) => {
     if (!post.deadline_date) return false;
-
     const today = new Date();
     const deadline = new Date(post.deadline_date);
-
     const diffDays = (deadline - today) / (1000 * 60 * 60 * 24);
-
     return diffDays >= 0 && diffDays <= 14;
   }).length;
 
@@ -365,6 +362,7 @@ export default function JobPostsPage() {
     { label: "Applied To", value: applications.length, bg: "#fff4e0" },
     { label: "Closing Soon", value: closingSoon, bg: "#fdeaea" },
   ];
+
   const filtered = posts.filter((p) => {
     const matchesSearch = p.job_title
       ?.toLowerCase()
@@ -379,7 +377,6 @@ export default function JobPostsPage() {
 
   return (
     <>
-      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -400,7 +397,7 @@ export default function JobPostsPage() {
           Job Posts
         </h1>
       </div>
-      {/* Stats */}
+
       <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
         {STATS.map((s) => (
           <div
@@ -450,7 +447,6 @@ export default function JobPostsPage() {
         ))}
       </div>
 
-      {/* Toolbar */}
       <div
         style={{
           display: "flex",
@@ -494,6 +490,7 @@ export default function JobPostsPage() {
             }}
           />
         </div>
+
         <button
           style={{
             padding: "9px 16px",
@@ -508,6 +505,7 @@ export default function JobPostsPage() {
         >
           Filter
         </button>
+
         <input
           value={locationFilter}
           onChange={(e) => setLocationFilter(e.target.value)}
@@ -525,7 +523,6 @@ export default function JobPostsPage() {
         />
       </div>
 
-      {/* Cards */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.length > 0 ? (
           filtered.map((post) => (
@@ -545,7 +542,6 @@ export default function JobPostsPage() {
         )}
       </div>
 
-      {/* Pagination */}
       <div
         style={{
           display: "flex",
