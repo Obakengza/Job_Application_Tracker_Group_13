@@ -5,10 +5,8 @@ import ProfilePage from "./components/ProfilePage";
 import JobTrackingPage from "./pages/JobTrackingPage";
 import JobPostsPage from "./pages/JobPostsPage";
 import LoginPage from "./pages/LoginPage";
-
-import AdminLoginPage from "./pages/admin/AdminLoginPage";
-import AdminJobPosts from "./pages/admin/AdminJobPosts";
-
+import AdminLoginPage from "./pages/Admin/AdminLoginPage";
+import AdminJobPosts from "./pages/Admin/AdminJobPosts";
 function App() {
   const location = useLocation();
 

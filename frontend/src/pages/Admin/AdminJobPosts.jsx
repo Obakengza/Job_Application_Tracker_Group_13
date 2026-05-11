@@ -1,35 +1,5 @@
-import { useState } from "react";
-
-const INITIAL_POSTS = [
-  {
-    id: 1,
-    title: "Graduate UI/UX Designer",
-    company: "NEDBANK",
-    location: "Cape Town",
-    salary: "R18 000/mo",
-    workType: "Full-time",
-    workMode: "On-site",
-    closes: "30/05/2026",
-    experience: "0–2 years",
-    department: "Design",
-    link: "nedbankrecruit.co.za",
-    datePosted: "2026-05-01",
-  },
-  {
-    id: 2,
-    title: "Graduate Sales Assistant",
-    company: "NEDBANK",
-    location: "Cape Town",
-    salary: "R15 000/mo",
-    workType: "Full-time",
-    workMode: "Hybrid",
-    closes: "25/05/2026",
-    experience: "0–1 year",
-    department: "Sales",
-    link: "nedbankrecruit.co.za",
-    datePosted: "2026-04-10",
-  },
-];
+import { useEffect, useState } from "react";
+import { apiRequest } from "../../api";
 
 const emptyForm = {
   title: "",
@@ -60,12 +30,24 @@ function timeAgo(dateStr) {
 }
 
 function AdminJobPosts() {
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const data = await apiRequest("/job-posts/");
+      setPosts(data);
+    } catch (error) {
+      console.error("Failed to fetch job posts:", error);
+    }
+  };
 
   const handleAddNew = () => {
     setEditingPost(null);
@@ -79,48 +61,84 @@ function AdminJobPosts() {
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (!form.title || !form.company) return;
+  const handleSave = async () => {
+    if (!form.title && !form.job_title) return;
 
-    if (editingPost) {
-      setPosts(
-        posts.map((p) =>
-          p.id === editingPost.id ? { ...form, id: editingPost.id } : p,
-        ),
-      );
-    } else {
-      // Auto set today's date when adding a new post
-      const today = new Date().toISOString().split("T")[0];
-      setPosts([...posts, { ...form, id: Date.now(), datePosted: today }]);
+    try {
+      const payload = {
+        job_title: form.title || form.job_title,
+        company_name: form.company || form.company_name,
+        location: form.location,
+        salary: form.salary,
+        employment_type: form.workType || form.employment_type,
+        work_mode: form.workMode || form.work_mode,
+        deadline_date: form.closes || form.deadline_date,
+        experience: form.experience,
+        department: form.department,
+        application_link: form.link || form.application_link,
+        post_date:
+          form.datePosted ||
+          form.post_date ||
+          new Date().toISOString().split("T")[0],
+      };
+
+      if (editingPost) {
+        await apiRequest(`/job-posts/${editingPost.id}/`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await apiRequest("/job-posts/", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+
+      await fetchPosts();
+
+      setShowModal(false);
+      setForm({ ...emptyForm });
+      setEditingPost(null);
+    } catch (error) {
+      console.error("Failed to save post:", error);
+      alert("Could not save post.");
     }
-
-    setShowModal(false);
-    setForm({ ...emptyForm });
-    setEditingPost(null);
   };
 
-  const handleDelete = (id) => {
-    setPosts(posts.filter((p) => p.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`http://127.0.0.1:8000/api/job-posts/${id}/`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Token ${localStorage.getItem("token")}`,
+        },
+      });
+
+      await fetchPosts();
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      alert("Could not delete post.");
+    }
   };
 
   // Filter by search
   const filtered = posts.filter(
     (p) =>
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.company.toLowerCase().includes(search.toLowerCase()),
+      p.job_title?.toLowerCase().includes(search.toLowerCase()) ||
+      p.company_name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   // Sort based on selected option
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "newest")
-      return new Date(b.datePosted) - new Date(a.datePosted);
+      return new Date(b.post_date) - new Date(a.post_date);
+
     if (sortBy === "oldest")
-      return new Date(a.datePosted) - new Date(b.datePosted);
+      return new Date(a.post_date) - new Date(b.post_date);
+
     if (sortBy === "closing")
-      return (
-        new Date(a.closes.split("/").reverse().join("-")) -
-        new Date(b.closes.split("/").reverse().join("-"))
-      );
+      return new Date(a.deadline_date) - new Date(b.deadline_date);
+
     return 0;
   });
 
@@ -145,7 +163,7 @@ function AdminJobPosts() {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-5 gap-4 mb-6">
           <div
             className="bg-white border-2 rounded-2xl p-4"
             style={{ borderColor: "#C1E2E4" }}
@@ -153,22 +171,44 @@ function AdminJobPosts() {
             <p className="text-gray-400 text-sm">Total Posts</p>
             <p className="text-2xl font-bold text-gray-800">{posts.length}</p>
           </div>
+
           <div
             className="bg-white border-2 rounded-2xl p-4"
             style={{ borderColor: "#C1E2E4" }}
           >
             <p className="text-gray-400 text-sm">Full-time Posts</p>
             <p className="text-2xl font-bold text-gray-800">
-              {posts.filter((p) => p.workType === "Full-time").length}
+              {posts.filter((p) => p.employment_type === "Full-time").length}
             </p>
           </div>
+
           <div
             className="bg-white border-2 rounded-2xl p-4"
             style={{ borderColor: "#C1E2E4" }}
           >
             <p className="text-gray-400 text-sm">Contract Posts</p>
             <p className="text-2xl font-bold text-gray-800">
-              {posts.filter((p) => p.workType === "Contract").length}
+              {posts.filter((p) => p.employment_type === "Contract").length}
+            </p>
+          </div>
+
+          <div
+            className="bg-white border-2 rounded-2xl p-4"
+            style={{ borderColor: "#C1E2E4" }}
+          >
+            <p className="text-gray-400 text-sm">Part-time Posts</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {posts.filter((p) => p.employment_type === "Part-time").length}
+            </p>
+          </div>
+
+          <div
+            className="bg-white border-2 rounded-2xl p-4"
+            style={{ borderColor: "#C1E2E4" }}
+          >
+            <p className="text-gray-400 text-sm">Internships</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {posts.filter((p) => p.employment_type === "Internship").length}
             </p>
           </div>
         </div>
@@ -227,27 +267,27 @@ function AdminJobPosts() {
               >
                 <div>
                   <p className="text-sm font-medium text-gray-800">
-                    {post.title}
+                    {post.job_title}
                   </p>
                   <p className="text-xs text-gray-400">{post.department}</p>
                 </div>
 
-                <p className="text-sm text-gray-600">{post.company}</p>
+                <p className="text-sm text-gray-600">{post.company_name}</p>
 
                 <div>
                   <p className="text-sm text-gray-600">{post.location}</p>
-                  <p className="text-xs text-gray-400">{post.workMode}</p>
+                  <p className="text-xs text-gray-400">{post.work_mode}</p>
                 </div>
 
                 {/* Posted date with colour indicator */}
                 <div>
                   <p className="text-sm text-gray-600">
-                    {timeAgo(post.datePosted)}
+                    {timeAgo(post.post_date)}
                   </p>
-                  <p className="text-xs text-gray-400">{post.datePosted}</p>
+                  <p className="text-xs text-gray-400">{post.post_date}</p>
                 </div>
 
-                <p className="text-sm text-gray-600">{post.closes}</p>
+                <p className="text-sm text-gray-600">{post.deadline_date}</p>
 
                 <div className="flex gap-2">
                   <button
@@ -319,7 +359,7 @@ function AdminJobPosts() {
                 {
                   label: "Closing Date",
                   key: "closes",
-                  placeholder: "DD/MM/YYYY",
+                  placeholder: "YYYY-MM-DD",
                 },
                 {
                   label: "Link",
@@ -332,6 +372,7 @@ function AdminJobPosts() {
                     {f.label}
                   </label>
                   <input
+                    type={f.key === "closes" ? "date" : "text"}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
                     placeholder={f.placeholder}
                     value={form[f.key] || ""}

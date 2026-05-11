@@ -644,15 +644,10 @@ export default function JobTrackingPage() {
 
       const formatted = data.map((app) => ({
         id: app.id,
-
         title: app.job_title || "Unknown Job",
-
         company: app.company_name || "Unknown Company",
-
         location: app.location || "",
-
         link: app.application_link || "",
-
         status:
           app.status_name?.toLowerCase().replace("interviewed", "interview") ||
           "applied",
