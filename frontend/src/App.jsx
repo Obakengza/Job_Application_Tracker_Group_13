@@ -30,7 +30,6 @@ function App() {
 
           <Route path="/admin" element={<AdminLoginPage />} />
           <Route path="/admin/dashboard" element={<AdminJobPosts />} />
-          <Route path="/" element={<ProfilePage />} />
           <Route path="/dashboard" element={<DashboardPage />} /> 
         </Routes>
       </div>

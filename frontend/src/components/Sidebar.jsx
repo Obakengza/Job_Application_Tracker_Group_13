@@ -14,7 +14,7 @@ function Sidebar() {
         ${location.pathname === "/dashboard" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
       >
 
-        Profile
+        Dashboard
       </Link>
 
       <Link
@@ -22,7 +22,7 @@ function Sidebar() {
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
           ${location.pathname === "/tracking" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
       >
-          Dashboard
+          Job Tracking
       </Link>
 
       <Link
@@ -30,7 +30,7 @@ function Sidebar() {
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
           ${location.pathname === "/" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
       >
-        Job Tracking
+        Profile
       </Link>
 
       <Link
