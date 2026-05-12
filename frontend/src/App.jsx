@@ -7,6 +7,7 @@ import JobPostsPage from "./pages/JobPostsPage";
 import LoginPage from "./pages/LoginPage";
 import AdminLoginPage from "./pages/Admin/AdminLoginPage";
 import AdminJobPosts from "./pages/Admin/AdminJobPosts";
+import DashboardPage from "./pages/DashboardPage";
 function App() {
   const location = useLocation();
 
@@ -29,6 +30,8 @@ function App() {
 
           <Route path="/admin" element={<AdminLoginPage />} />
           <Route path="/admin/dashboard" element={<AdminJobPosts />} />
+          <Route path="/" element={<ProfilePage />} />
+          <Route path="/dashboard" element={<DashboardPage />} /> 
         </Routes>
       </div>
     </div>
