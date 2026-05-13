@@ -18,44 +18,34 @@ const SORT_OPTIONS = [
 ];
 
 const CARDS_PER_COL = 4;
-
-function normalizeStatus(status) {
-  return String(status || "")
-    .toLowerCase()
-    .replace("interviewed", "interview")
-    .replace("offered", "accepted");
-}
-
-function mapApplication(app) {
-  return {
-    id: app.id,
-    status: normalizeStatus(app.status_name || app.status?.name || app.status),
-    title: app.job_title || app.job_post_title || `Job Post #${app.job_post}`,
-    company: app.company_name || "Company not shown",
-    date: app.application_date || "",
-    location: app.location || "",
-    workType: app.employment_type || "",
-    interviewDate: app.interview_date || "",
-    link: app.application_link || "",
-    note: app.note || "",
-  };
-}
+const emptyForm = {
+  title: "",
+  company: "",
+  date: "",
+  location: "",
+  workType: "",
+  interviewDate: "",
+  link: "",
+  note: "",
+  status: "applied",
+};
 
 function parseDate(str) {
   if (!str) return null;
-
-  if (str.includes("-")) {
-    return new Date(str);
-  }
-
   const [d, m, y] = str.split("/");
   if (!d || !m || !y) return null;
   return new Date(`${y}-${m}-${d}`);
 }
 
+function daysUntil(dateStr) {
+  const date = parseDate(dateStr);
+  if (!date) return null;
+  const diff = Math.ceil((date - new Date()) / 86400000);
+  return diff >= 0 ? diff : null;
+}
+
 function sortCards(cards, sortBy) {
   const sorted = [...cards];
-
   switch (sortBy) {
     case "newest":
       return sorted.sort(
@@ -71,18 +61,92 @@ function sortCards(cards, sortBy) {
       return sorted.sort((a, b) => b.title.localeCompare(a.title));
     case "company":
       return sorted.sort((a, b) => a.company.localeCompare(b.company));
+    case "interview":
+      return sorted.sort((a, b) => {
+        const da = parseDate(a.interviewDate);
+        const db = parseDate(b.interviewDate);
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da - db;
+      });
     default:
       return sorted;
   }
 }
 
-function KanbanCard({ app, onStatusChange }) {
+function DateInput({ value, onChange }) {
+  const parts = (value || "").split("/");
+  const dd = parts[0] || "";
+  const mm = parts[1] || "";
+  const yyyy = parts[2] || "";
+  const update = (newDd, newMm, newYyyy) =>
+    onChange(`${newDd}/${newMm}/${newYyyy}`);
+
+  const inputStyle = {
+    border: "0.5px solid #ddd",
+    borderRadius: 5,
+    padding: "5px 6px",
+    fontSize: 12,
+    background: "#fff",
+    color: "#1a1a18",
+    outline: "none",
+    fontFamily: "inherit",
+    textAlign: "center",
+  };
+  const sep = {
+    fontSize: 14,
+    color: "#aaa",
+    fontWeight: 600,
+    userSelect: "none",
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <input
+        value={dd}
+        maxLength={2}
+        placeholder="DD"
+        onChange={(e) => update(e.target.value.replace(/\D/g, ""), mm, yyyy)}
+        style={{ ...inputStyle, width: 36 }}
+      />
+      <span style={sep}>/</span>
+      <input
+        value={mm}
+        maxLength={2}
+        placeholder="MM"
+        onChange={(e) => update(dd, e.target.value.replace(/\D/g, ""), yyyy)}
+        style={{ ...inputStyle, width: 36 }}
+      />
+      <span style={sep}>/</span>
+      <input
+        value={yyyy}
+        maxLength={4}
+        placeholder="YYYY"
+        onChange={(e) => update(dd, mm, e.target.value.replace(/\D/g, ""))}
+        style={{ ...inputStyle, width: 52 }}
+      />
+    </div>
+  );
+}
+
+function KanbanCard({ app, onEdit, dragHandlers }) {
   const [expanded, setExpanded] = useState(false);
-  const s = STATUSES.find((x) => x.id === app.status) || STATUSES[0];
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ ...app });
+  const daysToInterview = daysUntil(app.interviewDate);
+  const s = STATUSES.find((x) => x.id === app.status);
+
+  const handleSave = () => {
+    onEdit(form);
+    setEditing(false);
+    setExpanded(false);
+  };
 
   return (
     <div
       draggable
+      onDragStart={(e) => dragHandlers.onDragStart(e, app.id)}
       style={{
         background: "#fff",
         borderRadius: 10,
@@ -97,6 +161,7 @@ function KanbanCard({ app, onStatusChange }) {
       }
       onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
     >
+      {/* Card header */}
       <div style={{ padding: "12px 14px" }}>
         <div
           style={{
@@ -117,7 +182,6 @@ function KanbanCard({ app, onStatusChange }) {
           >
             {app.title}
           </span>
-
           <span
             style={{
               background: s.bg,
@@ -140,11 +204,33 @@ function KanbanCard({ app, onStatusChange }) {
           {app.company} · Applied {app.date}
         </div>
 
+        {/* Interview countdown badge */}
+        {daysToInterview !== null && (
+          <span
+            style={{
+              background: "#FAEEDA",
+              color: "#BA7517",
+              fontSize: 10,
+              borderRadius: 20,
+              padding: "2px 8px",
+              fontWeight: 600,
+              display: "inline-block",
+            }}
+          >
+            {daysToInterview === 0
+              ? "Interview today!"
+              : `Interview in ${daysToInterview} day${daysToInterview !== 1 ? "s" : ""}`}
+          </span>
+        )}
+
         <div
           style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}
         >
           <button
-            onClick={() => setExpanded((v) => !v)}
+            onClick={() => {
+              setExpanded((v) => !v);
+              setEditing(false);
+            }}
             style={{
               background: "none",
               border: "none",
@@ -160,7 +246,8 @@ function KanbanCard({ app, onStatusChange }) {
         </div>
       </div>
 
-      {expanded && (
+      {/* Expanded details */}
+      {expanded && !editing && (
         <div
           style={{
             borderTop: "0.5px solid #f0f0ee",
@@ -184,7 +271,6 @@ function KanbanCard({ app, onStatusChange }) {
                 {app.location}
               </div>
             )}
-
             {app.workType && (
               <div>
                 <span style={{ color: "#999" }}>Work Type: </span>
@@ -193,16 +279,155 @@ function KanbanCard({ app, onStatusChange }) {
             )}
             {app.interviewDate && (
               <div>
-                <span style={{ color: "#999" }}>Interview Date: </span>
+                <span style={{ color: "#999" }}>Interview: </span>
                 {app.interviewDate}
               </div>
             )}
+            {app.link && (
+              <div>
+                <span style={{ color: "#999" }}>Link: </span>
+                <a
+                  href={`https://${app.link}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "#185FA5", fontSize: 11 }}
+                >
+                  {app.link}
+                </a>
+              </div>
+            )}
+            {app.note && (
+              <div>
+                <span style={{ color: "#999" }}>Note: </span>
+                {app.note}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setEditing(true)}
+            style={{
+              background: "#E6F1FB",
+              color: "#185FA5",
+              border: "none",
+              borderRadius: 6,
+              padding: "4px 12px",
+              fontSize: 11,
+              cursor: "pointer",
+              fontWeight: 600,
+              fontFamily: "inherit",
+            }}
+          >
+            Edit
+          </button>
+        </div>
+      )}
+
+      {/* Edit form */}
+      {expanded && editing && (
+        <div
+          style={{
+            borderTop: "0.5px solid #f0f0ee",
+            padding: "10px 14px 12px",
+            background: "#fafafa",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              marginBottom: 10,
+            }}
+          >
+            {[
+              { label: "Job Title", key: "title" },
+              { label: "Company", key: "company" },
+              { label: "Location", key: "location" },
+              { label: "Work Type", key: "workType" },
+              { label: "Link", key: "link" },
+              { label: "Note", key: "note" },
+            ].map((f) => (
+              <div key={f.key}>
+                <label
+                  style={{
+                    fontSize: 10,
+                    color: "#999",
+                    display: "block",
+                    marginBottom: 3,
+                  }}
+                >
+                  {f.label}
+                </label>
+                <input
+                  value={form[f.key] || ""}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, [f.key]: e.target.value }))
+                  }
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    border: "0.5px solid #ddd",
+                    borderRadius: 5,
+                    padding: "5px 8px",
+                    fontSize: 12,
+                    background: "#fff",
+                    color: "#1a1a18",
+                    outline: "none",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+            ))}
             <div>
-              <span style={{ color: "#999" }}>Change Status: </span>
-              <select
-                value={app.status}
-                onChange={(e) => onStatusChange(app.id, e.target.value)}
+              <label
                 style={{
+                  fontSize: 10,
+                  color: "#999",
+                  display: "block",
+                  marginBottom: 3,
+                }}
+              >
+                Date Applied
+              </label>
+              <DateInput
+                value={form.date}
+                onChange={(v) => setForm((p) => ({ ...p, date: v }))}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: 10,
+                  color: "#999",
+                  display: "block",
+                  marginBottom: 3,
+                }}
+              >
+                Interview Date
+              </label>
+              <DateInput
+                value={form.interviewDate}
+                onChange={(v) => setForm((p) => ({ ...p, interviewDate: v }))}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: 10,
+                  color: "#999",
+                  display: "block",
+                  marginBottom: 3,
+                }}
+              >
+                Status
+              </label>
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, status: e.target.value }))
+                }
+                style={{
+                  width: "100%",
                   border: "0.5px solid #ddd",
                   borderRadius: 5,
                   padding: "5px 8px",
@@ -213,38 +438,46 @@ function KanbanCard({ app, onStatusChange }) {
                   fontFamily: "inherit",
                 }}
               >
-                {STATUSES.map((status) => (
-                  <option key={status.id} value={status.id}>
-                    {status.label}
+                {STATUSES.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
                   </option>
                 ))}
               </select>
             </div>
-
-            {app.link && (
-              <div>
-                <span style={{ color: "#999" }}>Link: </span>
-                <a
-                  href={
-                    app.link.startsWith("http")
-                      ? app.link
-                      : `https://${app.link}`
-                  }
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: "#185FA5", fontSize: 11 }}
-                >
-                  {app.link}
-                </a>
-              </div>
-            )}
-
-            {app.note && (
-              <div>
-                <span style={{ color: "#999" }}>Note: </span>
-                {app.note}
-              </div>
-            )}
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              onClick={handleSave}
+              style={{
+                background: "#1a1a18",
+                color: "#fff",
+                border: "none",
+                borderRadius: 6,
+                padding: "4px 14px",
+                fontSize: 11,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontWeight: 600,
+              }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              style={{
+                background: "#f0f0f0",
+                color: "#555",
+                border: "none",
+                borderRadius: 6,
+                padding: "4px 12px",
+                fontSize: 11,
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
@@ -252,7 +485,7 @@ function KanbanCard({ app, onStatusChange }) {
   );
 }
 
-function KanbanColumn({ status, cards, search, sortBy, onStatusChange }) {
+function KanbanColumn({ status, cards, search, sortBy, onEdit, dragHandlers }) {
   const [page, setPage] = useState(1);
 
   const filtered = cards.filter(
@@ -260,7 +493,6 @@ function KanbanColumn({ status, cards, search, sortBy, onStatusChange }) {
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.company.toLowerCase().includes(search.toLowerCase()),
   );
-
   const sorted = sortCards(filtered, sortBy);
   const totalPages = Math.ceil(sorted.length / CARDS_PER_COL);
   const paginated = sorted.slice(
@@ -270,6 +502,8 @@ function KanbanColumn({ status, cards, search, sortBy, onStatusChange }) {
 
   return (
     <div
+      onDrop={(e) => dragHandlers.onDrop(e, status.id)}
+      onDragOver={(e) => e.preventDefault()}
       style={{
         flex: 1,
         minWidth: 220,
@@ -297,13 +531,11 @@ function KanbanColumn({ status, cards, search, sortBy, onStatusChange }) {
             flexShrink: 0,
           }}
         />
-
         <span
           style={{ fontSize: 13, fontWeight: 700, color: "#1a1a18", flex: 1 }}
         >
           {status.label}
         </span>
-
         <span
           style={{
             background: status.bg,
@@ -339,7 +571,8 @@ function KanbanColumn({ status, cards, search, sortBy, onStatusChange }) {
             <KanbanCard
               key={app.id}
               app={app}
-              onStatusChange={onStatusChange}
+              onEdit={onEdit}
+              dragHandlers={dragHandlers}
             />
           ))
         )}
@@ -370,11 +603,9 @@ function KanbanColumn({ status, cards, search, sortBy, onStatusChange }) {
           >
             ‹
           </button>
-
           <span style={{ fontSize: 11, color: "#888" }}>
             {page}/{totalPages}
           </span>
-
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
@@ -400,7 +631,9 @@ export default function JobTrackingPage() {
   const [apps, setApps] = useState([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({ ...emptyForm });
+  const [dragId, setDragId] = useState(null);
   useEffect(() => {
     fetchApplications();
   }, []);
@@ -408,18 +641,57 @@ export default function JobTrackingPage() {
   const fetchApplications = async () => {
     try {
       const data = await apiRequest("/applications/");
-      const mappedApps = data.map(mapApplication);
-      setApps(mappedApps);
+
+      const formatted = data.map((app) => ({
+        id: app.id,
+        title: app.job_title || "Unknown Job",
+        company: app.company_name || "Unknown Company",
+        location: app.location || "",
+        link: app.application_link || "",
+        status:
+          app.status_name?.toLowerCase().replace("interviewed", "interview") ||
+          "applied",
+      }));
+
+      setApps(formatted);
     } catch (error) {
       console.error("Failed to fetch applications:", error);
     }
   };
-  const handleStatusChange = async (applicationId, newStatusName) => {
+  const handleEdit = async (updated) => {
     try {
       const statuses = await apiRequest("/statuses/");
 
       const selectedStatus = statuses.find(
-        (status) => status.name.toLowerCase() === newStatusName.toLowerCase(),
+        (status) => status.name.toLowerCase() === updated.status.toLowerCase(),
+      );
+
+      await apiRequest(`/applications/${updated.id}/`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: selectedStatus.id,
+          interview_date: updated.interviewDate
+            ? updated.interviewDate.split("/").reverse().join("-")
+            : null,
+          note: updated.note,
+          employment_type: updated.workType || "Not specified",
+        }),
+      });
+
+      fetchApplications();
+    } catch (error) {
+      console.error("Failed to update application:", error);
+      alert("Could not save changes.");
+    }
+  };
+  const handleAdd = async () => {
+    if (!form.title || !form.company) return;
+
+    try {
+      const statuses = await apiRequest("/statuses/");
+
+      const selectedStatus = statuses.find(
+        (status) => status.name.toLowerCase() === form.status.toLowerCase(),
       );
 
       if (!selectedStatus) {
@@ -427,18 +699,65 @@ export default function JobTrackingPage() {
         return;
       }
 
-      await apiRequest(`/applications/${applicationId}/`, {
-        method: "PATCH",
+      await apiRequest("/applications/", {
+        method: "POST",
         body: JSON.stringify({
+          manual_job_title: form.title,
+          manual_company: form.company,
+          manual_location: form.location,
+          manual_application_link: form.link,
+          employment_type: form.workType || "Not specified",
+          work_mode: "Not specified",
+          application_date: form.date
+            ? form.date.split("/").reverse().join("-")
+            : new Date().toISOString().split("T")[0],
+          interview_date: form.interviewDate
+            ? form.interviewDate.split("/").reverse().join("-")
+            : null,
+          note: form.note,
           status: selectedStatus.id,
         }),
       });
 
-      fetchApplications();
+      await fetchApplications();
+
+      setForm({ ...emptyForm });
+      setShowModal(false);
     } catch (error) {
-      console.error("Failed to update status:", error);
-      alert("Could not update application status.");
+      console.error("Failed to add application:", error);
+      alert("Could not add application.");
     }
+  };
+
+  const dragHandlers = {
+    onDragStart: (e, id) => setDragId(id),
+
+    onDrop: async (e, colId) => {
+      e.preventDefault();
+
+      try {
+        const statuses = await apiRequest("/statuses/");
+
+        const selectedStatus = statuses.find(
+          (status) =>
+            status.name.toLowerCase().replace("interviewed", "interview") ===
+            colId,
+        );
+
+        await apiRequest(`/applications/${dragId}/`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            status: selectedStatus.id,
+          }),
+        });
+
+        fetchApplications();
+        setDragId(null);
+      } catch (error) {
+        console.error("Failed to move application:", error);
+        alert("Could not update status.");
+      }
+    },
   };
 
   const counts = STATUSES.reduce((acc, s) => {
@@ -457,6 +776,7 @@ export default function JobTrackingPage() {
       <div
         style={{ padding: "28px 24px 48px", minWidth: 0, overflowX: "auto" }}
       >
+        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -477,8 +797,25 @@ export default function JobTrackingPage() {
           >
             Job Tracking Page
           </h1>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              background: "#4DBFA0",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "8px 18px",
+              fontSize: 13,
+              cursor: "pointer",
+              fontWeight: 600,
+              fontFamily: "inherit",
+            }}
+          >
+            + Add
+          </button>
         </div>
 
+        {/* Status summary pills */}
         <div
           style={{
             display: "flex",
@@ -506,6 +843,7 @@ export default function JobTrackingPage() {
           ))}
         </div>
 
+        {/* Search + Sort row */}
         <div
           style={{
             display: "flex",
@@ -536,7 +874,6 @@ export default function JobTrackingPage() {
                 fontFamily: "inherit",
               }}
             />
-
             <span
               style={{
                 position: "absolute",
@@ -551,6 +888,7 @@ export default function JobTrackingPage() {
             </span>
           </div>
 
+          {/* Sort by */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span
               style={{
@@ -562,7 +900,6 @@ export default function JobTrackingPage() {
             >
               Sort by:
             </span>
-
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -587,6 +924,7 @@ export default function JobTrackingPage() {
           </div>
         </div>
 
+        {/* Kanban board */}
         <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
           {STATUSES.map((status) => (
             <KanbanColumn
@@ -595,11 +933,225 @@ export default function JobTrackingPage() {
               cards={apps.filter((a) => a.status === status.id)}
               search={search}
               sortBy={sortBy}
-              onStatusChange={handleStatusChange}
+              onEdit={handleEdit}
+              dragHandlers={dragHandlers}
             />
           ))}
         </div>
       </div>
+
+      {/* Add modal */}
+      {showModal && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.25)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 14,
+              padding: "28px 28px 24px",
+              width: 440,
+              border: "0.5px solid #e0e0e0",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <h2
+              style={{
+                margin: "0 0 20px",
+                fontSize: 16,
+                fontWeight: 700,
+                color: "#1a1a18",
+              }}
+            >
+              Add Application
+            </h2>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px 16px",
+                marginBottom: 14,
+              }}
+            >
+              {[
+                {
+                  label: "Job Title *",
+                  key: "title",
+                  placeholder: "e.g. Data Analyst",
+                },
+                {
+                  label: "Company *",
+                  key: "company",
+                  placeholder: "e.g. Nedbank",
+                },
+                {
+                  label: "Location",
+                  key: "location",
+                  placeholder: "e.g. Cape Town",
+                },
+                {
+                  label: "Work Type",
+                  key: "workType",
+                  placeholder: "e.g. Full-time",
+                },
+                {
+                  label: "Link",
+                  key: "link",
+                  placeholder: "www.company.co.za",
+                },
+                { label: "Note", key: "note", placeholder: "Any notes..." },
+              ].map((f) => (
+                <div key={f.key}>
+                  <label
+                    style={{
+                      fontSize: 11,
+                      color: "#999",
+                      display: "block",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {f.label}
+                  </label>
+                  <input
+                    value={form[f.key] || ""}
+                    placeholder={f.placeholder}
+                    onChange={(e) =>
+                      setForm((p) => ({ ...p, [f.key]: e.target.value }))
+                    }
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      border: "0.5px solid #ddd",
+                      borderRadius: 6,
+                      padding: "7px 10px",
+                      fontSize: 13,
+                      background: "#fafafa",
+                      color: "#1a1a18",
+                      outline: "none",
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+              ))}
+              <div>
+                <label
+                  style={{
+                    fontSize: 11,
+                    color: "#999",
+                    display: "block",
+                    marginBottom: 4,
+                  }}
+                >
+                  Date Applied
+                </label>
+                <DateInput
+                  value={form.date}
+                  onChange={(v) => setForm((p) => ({ ...p, date: v }))}
+                />
+              </div>
+              <div>
+                <label
+                  style={{
+                    fontSize: 11,
+                    color: "#999",
+                    display: "block",
+                    marginBottom: 4,
+                  }}
+                >
+                  Interview Date
+                </label>
+                <DateInput
+                  value={form.interviewDate}
+                  onChange={(v) => setForm((p) => ({ ...p, interviewDate: v }))}
+                />
+              </div>
+            </div>
+            <div style={{ marginBottom: 18 }}>
+              <label
+                style={{
+                  fontSize: 11,
+                  color: "#999",
+                  display: "block",
+                  marginBottom: 4,
+                }}
+              >
+                Status
+              </label>
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, status: e.target.value }))
+                }
+                style={{
+                  width: "100%",
+                  border: "0.5px solid #ddd",
+                  borderRadius: 6,
+                  padding: "7px 10px",
+                  fontSize: 13,
+                  background: "#fafafa",
+                  color: "#1a1a18",
+                  outline: "none",
+                  fontFamily: "inherit",
+                }}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div
+              style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}
+            >
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: "#f0f0f0",
+                  color: "#555",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 18px",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAdd}
+                style={{
+                  background: "#1a1a18",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "8px 20px",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontWeight: 600,
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

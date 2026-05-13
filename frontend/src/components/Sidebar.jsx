@@ -8,13 +8,13 @@ function Sidebar() {
       {/* App name / logo */}
       <h1 className="text-lg font-bold mb-6">Job Tracker</h1>
 
-      {/* Navigation links */}
-      <Link
-        to="/"
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-          ${location.pathname === "/" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
+    <Link
+      to="/dashboard"
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+        ${location.pathname === "/dashboard" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
       >
-        Profile
+
+        Dashboard
       </Link>
 
       <Link
@@ -22,7 +22,15 @@ function Sidebar() {
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
           ${location.pathname === "/tracking" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
       >
-        Job Tracking
+          Job Tracking
+      </Link>
+
+      <Link
+        to="/"
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+          ${location.pathname === "/" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-100"}`}
+      >
+        Profile
       </Link>
 
       <Link
