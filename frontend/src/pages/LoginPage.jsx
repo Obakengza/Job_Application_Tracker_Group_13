@@ -20,38 +20,70 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const handleSignIn = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/login/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: signInForm.email,
-          password: signInForm.password,
-        }),
-      });
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/auth/login/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: signInForm.email,
+        password: signInForm.password,
+      }),
+    });
 
-      if (!response.ok) {
-        alert("Invalid login details");
-        return;
-      }
-
-      const data = await response.json();
-
-      localStorage.setItem("token", data.token);
-
-      navigate("/");
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong during login");
+    if (!response.ok) {
+      alert("Invalid login details");
+      return;
     }
-  };
 
-  const handleSignUp = () => {
+    const data = await response.json();
+
+    localStorage.setItem("access", data.access);
+    localStorage.setItem("refresh", data.refresh);
+
+    alert("Login successful");
     navigate("/");
-  };
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong during login");
+  }
+};
 
+const handleSignUp = async () => {
+  if (signUpForm.password !== signUpForm.confirmPassword) {
+    alert("Passwords do not match");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/api/auth/register/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        first_name: signUpForm.firstName,
+        last_name: signUpForm.surname,
+        email: signUpForm.email,
+        password: signUpForm.password,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.log(errorData);
+      alert("Registration failed");
+      return;
+    }
+
+    alert("Account created successfully. Please sign in.");
+    setActiveTab("signin");
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong during registration");
+  }
+};
   return (
     <div className="min-h-screen flex">
       {/* Left side - decorative panel */}

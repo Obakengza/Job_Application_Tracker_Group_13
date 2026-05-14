@@ -1,31 +1,73 @@
-import { useState } from "react";
+import { useEffect,useState } from "react";
 
 function ProfilePage() {
   const [isEditingTop, setIsEditingTop] = useState(false);
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [isEditingEducation, setIsEditingEducation] = useState(false);
 
-  const [profile, setProfile] = useState({
-    name: "Yanelisa Busakwe",
-    role: "Data Analyst",
-    location: "City, Country",
-  });
+ const [profile, setProfile] = useState({
+  name: "",
+  role: "Job Seeker",
+  location: "South Africa",
+});
 
-  const [personal, setPersonal] = useState({
-    firstName: "Yanelisa",
-    surname: "Busakwe",
-    email: "yanelisabusakwe@gmail.com",
-    phone: "0123456789",
-    province: "North West",
-    country: "South Africa",
-    bio: "Computer Science student",
-  });
+const [personal, setPersonal] = useState({
+  firstName: "",
+  surname: "",
+  email: "",
+  phone: "",
+  province: "",
+  country: "",
+  bio: "",
+});
 
   const [education, setEducation] = useState({
     university: "North West University",
     qualification: "Bsc Computer Science & Mathematics",
     certificates: "Microsoft AI Fluency",
   });
+
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("access");
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/auth/user/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      setProfile({
+        name: `${data.first_name} ${data.last_name}`,
+        role: "Job Seeker",
+        location: "South Africa",
+      });
+
+      setPersonal({
+        firstName: data.first_name,
+        surname: data.last_name,
+        email: data.email,
+        phone: "",
+        province: "",
+        country: "South Africa",
+        bio: "",
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  fetchUser();
+}, []);
+
+
+
 
   return (
     <div className="min-h-screen bg-blue-50 p-8">

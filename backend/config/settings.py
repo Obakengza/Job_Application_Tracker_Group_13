@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'jobs',
     'rest_framework.authtoken',
     'corsheaders',
+    'accounts',
+    'rest_framework_simplejwt.token_blacklist',
 
 ]
 
@@ -86,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'job_tracker_db',
         'USER': 'postgres',
-        'PASSWORD': 'carolinestuurman',
+        'PASSWORD': 'postgres',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -131,6 +133,7 @@ STATIC_URL = 'static/'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
+         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 CORS_ALLOW_ALL_ORIGINS = True
