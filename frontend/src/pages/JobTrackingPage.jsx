@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "../api";
 
 const STATUSES = [
-  { id: "applied",   label: "Applied",     bg: "#C8E6EC", color: "#1a4a54" },
-  { id: "interview", label: "Interviewed", bg: "#FAEEDA", color: "#BA7517" },
-  { id: "accepted",  label: "Accepted",    bg: "#7BC47B", color: "#fff"    },
-  { id: "rejected",  label: "Rejected",    bg: "#E07070", color: "#fff"    },
+  { id: "applied",   label: "Applied",     bg: "#E8F4F7", color: "#2E7A8F" },
+  { id: "interview", label: "Interviewed", bg: "#FEF6E7", color: "#B07A2B" },
+  { id: "accepted",  label: "Accepted",    bg: "#EDFAF2", color: "#2E7D52" },
+  { id: "rejected",  label: "Rejected",    bg: "#FEF0F0", color: "#C0524F" },
 ];
 
 const SORT_OPTIONS = [
@@ -272,9 +272,9 @@ function KanbanColumn({ status, cards, search, sortBy, onEdit, dragHandlers }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <span style={{ width: 9, height: 9, borderRadius: "50%", background: status.color === "#fff" ? status.bg : status.color, display: "inline-block", flexShrink: 0 }} />
+        <span style={{ width: 9, height: 9, borderRadius: "50%", background: status.color, display: "inline-block", flexShrink: 0 }} />
         <span style={{ fontSize: 13, fontWeight: 700, color: "#111827", flex: 1 }}>{status.label}</span>
-        <span style={{ background: status.bg, color: status.color === "#fff" ? (status.id === "accepted" ? "#27500A" : "#791F1F") : status.color, fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "2px 8px" }}>
+        <span style={{ background: status.bg, color: status.color, fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "2px 8px" }}>
           {sorted.length}
         </span>
       </div>
@@ -454,21 +454,16 @@ export default function JobTrackingPage() {
 
         {/* Status summary pills */}
         <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-          {STATUSES.map((s) => {
-            const textColor = s.color === "#fff"
-              ? (s.id === "accepted" ? "#27500A" : "#791F1F")
-              : s.color;
-            return (
-              <div key={s.id} style={{
-                background: s.bg, color: textColor,
-                borderRadius: 20, padding: "4px 14px",
-                fontSize: 11, fontWeight: 700,
-                letterSpacing: "0.04em", textTransform: "uppercase",
-              }}>
-                {counts[s.id]} {s.label}
-              </div>
-            );
-          })}
+          {STATUSES.map((s) => (
+            <div key={s.id} style={{
+              background: s.bg, color: s.color,
+              borderRadius: 20, padding: "4px 14px",
+              fontSize: 11, fontWeight: 700,
+              letterSpacing: "0.04em", textTransform: "uppercase",
+            }}>
+              {counts[s.id]} {s.label}
+            </div>
+          ))}
         </div>
 
         {/* Search + Sort */}
