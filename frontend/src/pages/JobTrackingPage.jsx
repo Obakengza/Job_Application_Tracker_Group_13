@@ -422,29 +422,32 @@ export default function JobTrackingPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "'Segoe UI', Arial, sans-serif" }}>
 
-      {/* Top bar — matches Dashboard header */}
+      {/* Top bar — mirrors Dashboard header exactly */}
       <header style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "20px 32px",
+        padding: "28px 32px",
         background: "#fff",
         borderBottom: "1px solid #f3f4f6",
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
       }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#111827", letterSpacing: "-0.3px" }}>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#111827", letterSpacing: "-0.025em" }}>
           Job Tracking
         </h1>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            background: "#4DBFA0", color: "#fff",
-            border: "none", borderRadius: 8,
-            padding: "8px 20px", fontSize: 13,
-            cursor: "pointer", fontWeight: 600, fontFamily: "inherit",
-            boxShadow: "0 1px 3px rgba(77,191,160,0.3)",
-          }}
-        >
-          + Add
-        </button>
+
+        {/* Right-side controls — bell + add button, same structure as Dashboard's right cluster */}
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              background: "#4DBFA0", color: "#fff",
+              border: "none", borderRadius: 8,
+              padding: "8px 20px", fontSize: 13,
+              cursor: "pointer", fontWeight: 600, fontFamily: "inherit",
+            }}
+          >
+            + Add
+          </button>
+        </div>
       </header>
 
       <div style={{ padding: "28px 32px 48px", minWidth: 0, overflowX: "auto" }}>
