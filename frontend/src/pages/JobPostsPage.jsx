@@ -357,10 +357,10 @@ export default function JobPostsPage() {
   }).length;
 
   const STATS = [
-    { label: "Total Posts",       value: totalPosts,          bg: "#9fd4d4" },
-    { label: "Posted This Week",  value: postedThisWeek,      bg: "#a8dfc8" },
-    { label: "Applied To",        value: applications.length, bg: "#f4c06a" },
-    { label: "Closing Soon",      value: closingSoon,         bg: "#f0a0a0" },
+    { label: "Total Posts", value: totalPosts, bg: "#9fd4d4" },
+    { label: "Posted This Week", value: postedThisWeek, bg: "#a8dfc8" },
+    { label: "Applied To", value: applications.length, bg: "#f4c06a" },
+    { label: "Closing Soon", value: closingSoon, bg: "#f0a0a0" },
   ];
 
   const filtered = posts.filter((p) => {
@@ -377,7 +377,6 @@ export default function JobPostsPage() {
 
   return (
     <div style={{ background: "#f4f6fb", minHeight: "100vh" }}>
-
       {/* White title bar — matches Dashboard */}
       <div
         style={{
@@ -388,7 +387,6 @@ export default function JobPostsPage() {
       >
         <h1
           style={{
-            fontFamily: "'Syne', sans-serif",
             fontSize: 26,
             fontWeight: 700,
             color: "#1a1f2e",
@@ -402,7 +400,6 @@ export default function JobPostsPage() {
 
       {/* Content area with padding — matches Dashboard card area */}
       <div style={{ padding: "32px 40px" }}>
-
         {/* Stat cards — full color, no border, stacked label + number */}
         <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
           {STATS.map((s) => (
@@ -630,7 +627,6 @@ export default function JobPostsPage() {
             </svg>
           </button>
         </div>
-
       </div>
     </div>
   );
