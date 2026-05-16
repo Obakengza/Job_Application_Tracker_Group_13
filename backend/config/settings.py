@@ -86,9 +86,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'job_tracker_db',
+        'NAME': 'job_tracker',
         'USER': 'postgres',
-        'PASSWORD': 'postgres',
+        'PASSWORD': 'Fana@2026',
         'HOST': 'localhost',
         'PORT': '5432',
     }
