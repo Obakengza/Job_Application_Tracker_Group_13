@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api";
-import "../styles/typography.css";
 
 const AGE_STYLES = {
   fresh: { bg: "#e6f7f1", color: "#4caf87", border: "#a8dfc8" },
