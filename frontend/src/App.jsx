@@ -11,7 +11,6 @@ import DashboardPage from "./pages/DashboardPage";
 function App() {
   const location = useLocation();
 
-  // Hide sidebar on login and admin pages
   const hideSidebar =
     location.pathname === "/login" || location.pathname.startsWith("/admin");
 
@@ -30,7 +29,7 @@ function App() {
 
           <Route path="/admin" element={<AdminLoginPage />} />
           <Route path="/admin/dashboard" element={<AdminJobPosts />} />
-          <Route path="/dashboard" element={<DashboardPage />} /> 
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </div>
     </div>
