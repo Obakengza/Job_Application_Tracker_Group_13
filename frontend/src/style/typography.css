@@ -60,7 +60,7 @@ h4,
 }
 
 /* H1 — Page titles e.g. "Welcome Back" */
-h1,
+h1  ,
 .h1 {
   font-size: 2rem; /* 32px */
   font-weight: 800;
