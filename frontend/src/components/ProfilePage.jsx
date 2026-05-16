@@ -64,6 +64,7 @@ function ProfilePage() {
   }, []);
 
   return (
+    
     <div className="min-h-screen bg-blue-50">
       <div className="mx-auto">
         {/* Top bar */}
