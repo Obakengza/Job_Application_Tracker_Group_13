@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api";
+import "../styles/typography.css";
 
 const AGE_STYLES = {
   fresh: { bg: "#e6f7f1", color: "#4caf87", border: "#a8dfc8" },
@@ -357,10 +358,10 @@ export default function JobPostsPage() {
   }).length;
 
   const STATS = [
-    { label: "Total Posts", value: totalPosts, bg: "#e8f7f7" },
-    { label: "Posted This Week", value: postedThisWeek, bg: "#e6f7f1" },
-    { label: "Applied To", value: applications.length, bg: "#fff4e0" },
-    { label: "Closing Soon", value: closingSoon, bg: "#fdeaea" },
+    { label: "Total Posts",       value: totalPosts,          bg: "#9fd4d4" },
+    { label: "Posted This Week",  value: postedThisWeek,      bg: "#a8dfc8" },
+    { label: "Applied To",        value: applications.length, bg: "#f4c06a" },
+    { label: "Closing Soon",      value: closingSoon,         bg: "#f0a0a0" },
   ];
 
   const filtered = posts.filter((p) => {
@@ -376,13 +377,14 @@ export default function JobPostsPage() {
   });
 
   return (
-    <>
+    <div style={{ background: "#f4f6fb", minHeight: "100vh" }}>
+
+      {/* White title bar — matches Dashboard */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 28,
+          background: "#fff",
+          padding: "28px 40px 20px",
+          borderBottom: "1.5px solid #eef0f5",
         }}
       >
         <h1
@@ -392,42 +394,36 @@ export default function JobPostsPage() {
             fontWeight: 700,
             color: "#1a1f2e",
             letterSpacing: "-0.5px",
+            margin: 0,
           }}
         >
           Job Posts
         </h1>
       </div>
 
-      <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
-        {STATS.map((s) => (
-          <div
-            key={s.label}
-            style={{
-              background: "#fff",
-              border: "1.5px solid #eef0f5",
-              borderRadius: 12,
-              padding: "16px 20px",
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-            }}
-          >
+      {/* Content area with padding — matches Dashboard card area */}
+      <div style={{ padding: "32px 40px" }}>
+
+        {/* Stat cards — full color, no border, stacked label + number */}
+        <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
+          {STATS.map((s) => (
             <div
+              key={s.label}
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
                 background: s.bg,
+                borderRadius: 14,
+                padding: "24px 22px",
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
               }}
-            />
-            <div>
+            >
               <div
                 style={{
-                  fontSize: 12,
-                  color: "#8892a4",
+                  fontSize: 13,
+                  color: "#1a1f2eaa",
                   fontWeight: 500,
-                  marginBottom: 2,
                 }}
               >
                 {s.label}
@@ -435,7 +431,7 @@ export default function JobPostsPage() {
               <div
                 style={{
                   fontFamily: "'Syne', sans-serif",
-                  fontSize: 20,
+                  fontSize: 28,
                   fontWeight: 700,
                   color: "#1a1f2e",
                 }}
@@ -443,196 +439,200 @@ export default function JobPostsPage() {
                 {s.value}
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 20,
-        }}
-      >
-        <div style={{ position: "relative", flex: 1, maxWidth: 340 }}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#8892a4"
-            strokeWidth="2"
+        {/* Search and filter row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ position: "relative", flex: 1, maxWidth: 340 }}>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#8892a4"
+              strokeWidth="2"
+              style={{
+                position: "absolute",
+                left: 14,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 15,
+                height: 15,
+              }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search job title..."
+              style={{
+                width: "100%",
+                padding: "10px 14px 10px 40px",
+                border: "1.5px solid #eef0f5",
+                borderRadius: 10,
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 13.5,
+                color: "#1a1f2e",
+                background: "#fff",
+                outline: "none",
+              }}
+            />
+          </div>
+
+          <button
             style={{
-              position: "absolute",
-              left: 14,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: 15,
-              height: 15,
+              padding: "9px 16px",
+              border: "1.5px solid #eef0f5",
+              background: "#fff",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#8892a4",
+              cursor: "pointer",
             }}
           >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+            Filter
+          </button>
+
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search job title..."
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            placeholder="Filter by location"
             style={{
-              width: "100%",
-              padding: "10px 14px 10px 40px",
+              padding: "9px 16px",
               border: "1.5px solid #eef0f5",
-              borderRadius: 10,
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 13.5,
-              color: "#1a1f2e",
               background: "#fff",
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#8892a4",
               outline: "none",
             }}
           />
         </div>
 
-        <button
-          style={{
-            padding: "9px 16px",
-            border: "1.5px solid #eef0f5",
-            background: "#fff",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 500,
-            color: "#8892a4",
-            cursor: "pointer",
-          }}
-        >
-          Filter
-        </button>
+        {/* Post cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {filtered.length > 0 ? (
+            filtered.map((post) => (
+              <PostCard key={post.id} post={post} onApply={handleApply} />
+            ))
+          ) : (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "48px 0",
+                color: "#8892a4",
+                fontSize: 14,
+              }}
+            >
+              No posts match "{search}"
+            </div>
+          )}
+        </div>
 
-        <input
-          value={locationFilter}
-          onChange={(e) => setLocationFilter(e.target.value)}
-          placeholder="Filter by location"
+        {/* Pagination */}
+        <div
           style={{
-            padding: "9px 16px",
-            border: "1.5px solid #eef0f5",
-            background: "#fff",
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 500,
-            color: "#8892a4",
-            outline: "none",
-          }}
-        />
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {filtered.length > 0 ? (
-          filtered.map((post) => (
-            <PostCard key={post.id} post={post} onApply={handleApply} />
-          ))
-        ) : (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "48px 0",
-              color: "#8892a4",
-              fontSize: 14,
-            }}
-          >
-            No posts match "{search}"
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          marginTop: 28,
-        }}
-      >
-        <button
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 9,
-            border: "1.5px solid #eef0f5",
-            background: "#fff",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            cursor: "pointer",
+            gap: 6,
+            marginTop: 28,
           }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#8892a4"
-            strokeWidth="2.5"
-            style={{ width: 13, height: 13 }}
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        {[1, 2].map((n) => (
           <button
-            key={n}
-            onClick={() => setCurrentPage(n)}
             style={{
               width: 36,
               height: 36,
               borderRadius: 9,
-              border: `1.5px solid ${currentPage === n ? "#5bbfbf" : "#eef0f5"}`,
-              background: currentPage === n ? "#5bbfbf" : "#fff",
-              color: currentPage === n ? "#fff" : "#8892a4",
+              border: "1.5px solid #eef0f5",
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#8892a4"
+              strokeWidth="2.5"
+              style={{ width: 13, height: 13 }}
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          {[1, 2].map((n) => (
+            <button
+              key={n}
+              onClick={() => setCurrentPage(n)}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 9,
+                border: `1.5px solid ${currentPage === n ? "#5bbfbf" : "#eef0f5"}`,
+                background: currentPage === n ? "#5bbfbf" : "#fff",
+                color: currentPage === n ? "#fff" : "#8892a4",
+                fontSize: 13.5,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {n}
+            </button>
+          ))}
+          <span style={{ fontSize: 13, color: "#8892a4" }}>...</span>
+          <button
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 9,
+              border: "1.5px solid #eef0f5",
+              background: "#fff",
+              color: "#8892a4",
               fontSize: 13.5,
               fontWeight: 600,
               cursor: "pointer",
             }}
           >
-            {n}
+            5
           </button>
-        ))}
-        <span style={{ fontSize: 13, color: "#8892a4" }}>...</span>
-        <button
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 9,
-            border: "1.5px solid #eef0f5",
-            background: "#fff",
-            color: "#8892a4",
-            fontSize: 13.5,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          5
-        </button>
-        <button
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 9,
-            border: "1.5px solid #eef0f5",
-            background: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-          }}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#8892a4"
-            strokeWidth="2.5"
-            style={{ width: 13, height: 13 }}
+          <button
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 9,
+              border: "1.5px solid #eef0f5",
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
           >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#8892a4"
+              strokeWidth="2.5"
+              style={{ width: 13, height: 13 }}
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+
       </div>
-    </>
+    </div>
   );
 }
