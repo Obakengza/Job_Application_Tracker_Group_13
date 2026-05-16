@@ -65,10 +65,10 @@ function ProfilePage() {
 
   return (
     
-    <div className="min-h-screen bg-blue-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="mx-auto">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-100 shadow-sm">
+        <header className="flex items-center justify-between px-8 py-7 bg-white border-b border-gray-100 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
             Profile
           </h1>
