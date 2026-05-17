@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiRequest } from "../api";
+import { apiRequest } from "../api";
 
 const quickLinks = [
   {
@@ -60,7 +61,11 @@ function computeStats(applications) {
 }
 
 function GaugeChart({ stats }) {
-  const total = stats.applications || 1;
+  // Use the sum of all four values as the total so each segment is
+  // proportional to the full dataset — not just applications count.
+  const total =
+    (stats.applications + stats.interviews + stats.accepted + stats.rejected) || 1;
+
   const segments = [
     { value: stats.applications, color: "#93C5CF", label: "Applications" },
     { value: stats.interviews,   color: "#E8A838", label: "Interviews"   },
@@ -68,44 +73,55 @@ function GaugeChart({ stats }) {
     { value: stats.rejected,     color: "#E07070", label: "Rejected"     },
   ];
 
-  const r = 80, strokeWidth = 22;
-  const circumference = Math.PI * r;
-  let cumulative = 0;
-
+  // Using pathLength="100" normalises the arc to 100 units so fractions map
+  // directly to percentages. No circumference maths needed.
+  // strokeDasharray = "<segmentLength> 100"
+  // strokeDashoffset = -<cumulative offset>  (negative shifts forward along path)
+  let cursor = 0;
   const arcs = segments.map((seg) => {
-    const fraction = seg.value / total;
-    const dashArray = fraction * circumference;
-    const dashOffset = -cumulative * circumference;
-    cumulative += fraction;
-    return { ...seg, dashArray, dashOffset };
+    const len = (seg.value / total) * 100;
+    const offset = cursor;
+    cursor += len;
+    return { ...seg, len, offset };
   });
 
   const interviewPct = Math.round((stats.interviews / total) * 100);
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: 200, height: 110 }}>
-        <svg viewBox="0 0 200 110" width="200" height="110">
-          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#E8EDF0" strokeWidth={strokeWidth} strokeLinecap="round" />
-          {arcs.map((arc, i) => (
-            <path
-              key={i}
-              d="M 20 100 A 80 80 0 0 1 180 100"
-              fill="none"
-              stroke={arc.color}
-              strokeWidth={strokeWidth}
-              strokeLinecap="butt"
-              strokeDasharray={`${arc.dashArray} ${circumference}`}
-              strokeDashoffset={arc.dashOffset}
-              pathLength={circumference}
-            />
-          ))}
+      <div className="relative" style={{ width: 220, height: 120 }}>
+        <svg viewBox="0 0 220 120" width="220" height="120">
+          {/* Track */}
+          <path
+            d="M 20 110 A 90 90 0 0 1 200 110"
+            fill="none"
+            stroke="#E8EDF0"
+            strokeWidth={22}
+            strokeLinecap="butt"
+          />
+          {/* Colour segments — zero-gap, flush against each other */}
+          {arcs.map((arc, i) =>
+            arc.len > 0 ? (
+              <path
+                key={i}
+                d="M 20 110 A 90 90 0 0 1 200 110"
+                fill="none"
+                stroke={arc.color}
+                strokeWidth={22}
+                strokeLinecap="butt"
+                pathLength="100"
+                strokeDasharray={`${arc.len} 100`}
+                strokeDashoffset={-arc.offset}
+              />
+            ) : null
+          )}
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
+        <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
           <span className="text-3xl font-bold text-gray-800">{interviewPct}%</span>
           <span className="text-xs text-gray-500 font-medium">Interviews</span>
         </div>
       </div>
+
       <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 justify-center">
         {segments.map((s) => (
           <div key={s.label} className="flex items-center gap-1.5">
@@ -137,54 +153,32 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Read jobs from localStorage — update the key to match your JobTrackingPage
-    const fetchDashboard = async () => {
-      try {
-        const [applications, user] = await Promise.all([
-          apiRequest("/applications/"),
-          apiRequest("/auth/user/"),
-        ]);
+    const stored = localStorage.getItem("jobs") || localStorage.getItem("applications") || "[]";
+    try {
+      const jobs = JSON.parse(stored);
+      setStats(computeStats(jobs));
 
-        setStats(computeStats(applications));
-        setUserName(`${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || user.username || "User");
-
-        const upcoming = applications.find((application) =>
-          ["interview", "interviewed", "interviewing"].includes(getStatusName(application)) && application.interview_date
-        );
-        const interviewNotifications = applications
-          .filter((application) =>
-            ["interview", "interviewed", "interviewing"].includes(getStatusName(application)) && application.interview_date
-          )
-          .map((application) => ({
-            id: application.id,
-            title: `Interview at ${application.company_name || "a company"}`,
-            date: application.interview_date,
-            jobTitle: application.job_title || "Job application",
-          }));
-
-        setNotifications(interviewNotifications);
-
-        if (upcoming) {
-          setReminder({
-            title: `Interview at ${upcoming.company_name || "a company"}`,
-            date: upcoming.interview_date,
-            time: "",
-            company: upcoming.company_name || "",
-          });
-        } else {
-          setReminder(null);
-        }
-      } catch (error) {
-        console.error("Failed to load dashboard:", error);
-        setStats({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
-        setReminder(null);
-        setNotifications([]);
+      // Find the next upcoming interview as a reminder
+      const upcoming = jobs.find((j) =>
+        ["interview", "interviewing", "Interview", "Interviewing"].includes(j.status) && j.date
+      );
+      if (upcoming) {
+        setReminder({
+          title: `Interview at ${upcoming.company || "a company"}`,
+          date: upcoming.date,
+          time: upcoming.time || "",
+          company: upcoming.company || "",
+        });
       }
-    };
-
-    fetchDashboard();
+    } catch {
+      setStats({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
+    }
   }, []);
 
-  const initials = userName.split(" ").map((n) => n[0]).join("");
+  const initials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -272,7 +266,12 @@ export default function DashboardPage() {
                       <path d="M16 2v4M8 2v4M3 10h18" />
                     </svg>
                     <span>{reminder.date}</span>
-                    {reminder.time && <><span className="text-gray-300">|</span><span>{reminder.time}</span></>}
+                    {reminder.time && (
+                      <>
+                        <span className="text-gray-300">|</span>
+                        <span>{reminder.time}</span>
+                      </>
+                    )}
                   </div>
                   <p className="mt-2 text-sm font-semibold text-gray-700">{reminder.company}</p>
                 </>
@@ -288,8 +287,17 @@ export default function DashboardPage() {
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {quickLinks.map((link) => (
-                  <a key={link.name} href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 group">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition group-hover:scale-105" style={{ background: link.color }}>
+                  <a
+                    key={link.name}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-2 group"
+                  >
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition group-hover:scale-105"
+                      style={{ background: link.color }}
+                    >
                       <span className="text-white">{link.icon}</span>
                     </div>
                     <span className="text-xs text-gray-500 font-medium">{link.name}</span>
