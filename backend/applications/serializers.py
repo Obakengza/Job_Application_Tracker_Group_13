@@ -48,7 +48,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     def get_company_name(self, obj):
         if obj.job_post and obj.job_post.company:
             return obj.job_post.company.company_name
-        return "No Company"
+        return obj.manual_company or "No Company"
 
     def get_location(self, obj):
         if obj.job_post:

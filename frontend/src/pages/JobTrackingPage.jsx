@@ -3,7 +3,7 @@ import { apiRequest } from "../api";
 
 const STATUSES = [
   { id: "applied",   label: "Applied",     bg: "#E8F4F7", color: "#2E7A8F" },
-  { id: "interview", label: "Interviewed", bg: "#FEF6E7", color: "#B07A2B" },
+  { id: "interview", label: "Interview",   bg: "#FEF6E7", color: "#B07A2B" },
   { id: "accepted",  label: "Accepted",    bg: "#EDFAF2", color: "#2E7D52" },
   { id: "rejected",  label: "Rejected",    bg: "#FEF0F0", color: "#C0524F" },
 ];
@@ -22,6 +22,29 @@ const emptyForm = {
   title: "", company: "", date: "", location: "", workType: "",
   interviewDate: "", link: "", note: "", status: "applied",
 };
+
+function normalizeStatusId(statusName) {
+  const value = (statusName || "").toLowerCase().trim();
+  if (value === "interviewed") return "interview";
+  if (value === "offer") return "accepted";
+  return value;
+}
+
+async function getStatusForColumn(statuses, statusId) {
+  const selectedStatus = statuses.find(
+    (status) => normalizeStatusId(status.name) === statusId,
+  );
+
+  if (selectedStatus) return selectedStatus;
+
+  const label = STATUSES.find((status) => status.id === statusId)?.label;
+  if (!label) return null;
+
+  return apiRequest("/statuses/", {
+    method: "POST",
+    body: JSON.stringify({ name: label }),
+  });
+}
 
 function parseDate(str) {
   if (!str) return null;
@@ -325,7 +348,7 @@ export default function JobTrackingPage() {
         company: app.company_name || "Unknown Company",
         location: app.location || "",
         link: app.application_link || "",
-        status: app.status_name?.toLowerCase().replace("interviewed", "interview") || "applied",
+        status: normalizeStatusId(app.status_name) || "applied",
       }));
       setApps(formatted);
     } catch (error) {
@@ -336,7 +359,8 @@ export default function JobTrackingPage() {
   const handleEdit = async (updated) => {
     try {
       const statuses = await apiRequest("/statuses/");
-      const selectedStatus = statuses.find((s) => s.name.toLowerCase() === updated.status.toLowerCase());
+      const selectedStatus = await getStatusForColumn(statuses, updated.status);
+      if (!selectedStatus) { alert("Status not found."); return; }
       await apiRequest(`/applications/${updated.id}/`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -357,7 +381,7 @@ export default function JobTrackingPage() {
     if (!form.title || !form.company) return;
     try {
       const statuses = await apiRequest("/statuses/");
-      const selectedStatus = statuses.find((s) => s.name.toLowerCase() === form.status.toLowerCase());
+      const selectedStatus = await getStatusForColumn(statuses, form.status);
       if (!selectedStatus) { alert("Status not found."); return; }
       await apiRequest("/applications/", {
         method: "POST",
@@ -389,9 +413,8 @@ export default function JobTrackingPage() {
       e.preventDefault();
       try {
         const statuses = await apiRequest("/statuses/");
-        const selectedStatus = statuses.find(
-          (s) => s.name.toLowerCase().replace("interviewed", "interview") === colId,
-        );
+        const selectedStatus = await getStatusForColumn(statuses, colId);
+        if (!selectedStatus) { alert("Status not found."); return; }
         await apiRequest(`/applications/${dragId}/`, {
           method: "PATCH",
           body: JSON.stringify({ status: selectedStatus.id }),

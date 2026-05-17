@@ -310,13 +310,15 @@ export default function JobPostsPage() {
   const handleApply = async (post) => {
     try {
       const statuses = await apiRequest("/statuses/");
-      const appliedStatus = statuses.find(
+      let appliedStatus = statuses.find(
         (status) => status.name.toLowerCase() === "applied",
       );
 
       if (!appliedStatus) {
-        alert("Applied status not found.");
-        return;
+        appliedStatus = await apiRequest("/statuses/", {
+          method: "POST",
+          body: JSON.stringify({ name: "Applied" }),
+        });
       }
 
       await apiRequest("/applications/", {

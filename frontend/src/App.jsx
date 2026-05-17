@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Navigate, Routes, Route, useLocation } from "react-router-dom";
 
 import Sidebar from "./components/Sidebar";
 import ProfilePage from "./components/ProfilePage";
@@ -14,6 +14,8 @@ function App() {
   const hideSidebar =
     location.pathname === "/login" || location.pathname.startsWith("/admin");
 
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
+
   return (
     <div className="flex">
       {!hideSidebar && <Sidebar />}
@@ -28,7 +30,10 @@ function App() {
           <Route path="/posts" element={<JobPostsPage />} />
 
           <Route path="/admin" element={<AdminLoginPage />} />
-          <Route path="/admin/dashboard" element={<AdminJobPosts />} />
+          <Route
+            path="/admin/dashboard"
+            element={isAdmin ? <AdminJobPosts /> : <Navigate to="/admin" replace />}
+          />
           <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </div>

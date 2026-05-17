@@ -1,10 +1,8 @@
 SELECT
     c.company_name,
-    COUNT(*) AS applications
+    COUNT(ja.application_id) AS total_applications
 FROM company c
-JOIN job_post jp
-ON c.company_id = jp.company_id
 JOIN job_application ja
-ON jp.job_post_id = ja.job_post_id
+ON c.company_id = ja.company_id
 GROUP BY c.company_name
-ORDER BY applications DESC; 
+ORDER BY total_applications DESC;

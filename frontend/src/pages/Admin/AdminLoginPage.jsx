@@ -6,8 +6,13 @@ function AdminLoginPage() {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    // For now just go to admin dashboard
-    // Later this will verify admin credentials with the backend
+    if (form.email.trim() !== "admin@gmail.com" || form.password !== "cmpgadmin") {
+      localStorage.removeItem("isAdmin");
+      alert("Invalid admin email or password");
+      return;
+    }
+
+    localStorage.setItem("isAdmin", "true");
     navigate("/admin/dashboard");
   };
 

@@ -88,7 +88,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'job_tracker',
         'USER': 'postgres',
-        'PASSWORD': 'Fana@2026',
+        'PASSWORD': 'cmpgadmin',
         'HOST': 'localhost',
         'PORT': '5432',
     }
