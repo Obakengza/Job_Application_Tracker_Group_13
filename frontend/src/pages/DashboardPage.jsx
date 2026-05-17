@@ -151,27 +151,27 @@ export default function DashboardPage() {
   const [userRole] = useState("Job Seeker");
 
   useEffect(() => {
-    // Read jobs from localStorage — update the key to match your JobTrackingPage
-    const stored = localStorage.getItem("jobs") || localStorage.getItem("applications") || "[]";
-    try {
-      const jobs = JSON.parse(stored);
-      setStats(computeStats(jobs));
-
-      // Find the next upcoming interview as a reminder
-      const upcoming = jobs.find((j) =>
-        ["interview", "interviewing", "Interview", "Interviewing"].includes(j.status) && j.date
-      );
-      if (upcoming) {
-        setReminder({
-          title: `Interview at ${upcoming.company || "a company"}`,
-          date: upcoming.date,
-          time: upcoming.time || "",
-          company: upcoming.company || "",
-        });
-      }
-    } catch {
-      setStats({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
-    }
+    apiRequest("/applications/")
+      .then((data) => {
+        setStats(computeStats(data));
+        const upcoming = data.find(
+          (j) =>
+            ["interview", "interviewed", "interviewing"].includes(
+              (j.status_name || "").toLowerCase()
+            ) && j.interview_date
+        );
+        if (upcoming) {
+          setReminder({
+            title: `Interview at ${upcoming.company_name || "a company"}`,
+            date: upcoming.interview_date,
+            time: "",
+            company: upcoming.company_name || "",
+          });
+        }
+      })
+      .catch(() => {
+        setStats({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
+      });
   }, []);
 
   const initials = userName
