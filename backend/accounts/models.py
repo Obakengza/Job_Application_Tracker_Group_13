@@ -13,6 +13,10 @@ class Profile(models.Model):
     address = models.CharField(max_length=150, blank=True)
     province = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=100, blank=True)
+    bio = models.TextField(blank=True)
+    university = models.CharField(max_length=150, blank=True)
+    qualification = models.CharField(max_length=150, blank=True)
+    certificates = models.CharField(max_length=200, blank=True)
 
     role = models.CharField(
         max_length=50,

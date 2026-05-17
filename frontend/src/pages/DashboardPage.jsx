@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiRequest } from "../api";
 
 const quickLinks = [
   {
@@ -39,18 +40,21 @@ const quickLinks = [
   },
 ];
 
-// Reads jobs from localStorage and computes stats
-function computeStats(jobs) {
+function getStatusName(application) {
+  return (application.status_name || "").toLowerCase();
+}
+
+function computeStats(applications) {
   return {
-    applications: jobs.length,
-    interviews: jobs.filter((j) =>
-      ["interview", "interviewing", "Interview", "Interviewing"].includes(j.status)
+    applications: applications.length,
+    interviews: applications.filter((application) =>
+      ["interview", "interviewed", "interviewing"].includes(getStatusName(application))
     ).length,
-    accepted: jobs.filter((j) =>
-      ["accepted", "offer", "Accepted", "Offer"].includes(j.status)
+    accepted: applications.filter((application) =>
+      ["accepted", "offer"].includes(getStatusName(application))
     ).length,
-    rejected: jobs.filter((j) =>
-      ["rejected", "Rejected"].includes(j.status)
+    rejected: applications.filter((application) =>
+      getStatusName(application) === "rejected"
     ).length,
   };
 }
@@ -126,31 +130,58 @@ function StatCard({ label, value, bg, textColor }) {
 export default function DashboardPage() {
   const [stats, setStats] = useState({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
   const [reminder, setReminder] = useState(null);
-  const [userName] = useState("Yanelisa Busakwe");
-  const [userRole] = useState("Data Analyst");
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [userName, setUserName] = useState("User");
+  const [userRole] = useState("Job Seeker");
 
   useEffect(() => {
     // Read jobs from localStorage — update the key to match your JobTrackingPage
-    const stored = localStorage.getItem("jobs") || localStorage.getItem("applications") || "[]";
-    try {
-      const jobs = JSON.parse(stored);
-      setStats(computeStats(jobs));
+    const fetchDashboard = async () => {
+      try {
+        const [applications, user] = await Promise.all([
+          apiRequest("/applications/"),
+          apiRequest("/auth/user/"),
+        ]);
 
-      // Find the next upcoming interview as a reminder
-      const upcoming = jobs.find((j) =>
-        ["interview", "interviewing", "Interview", "Interviewing"].includes(j.status) && j.date
-      );
-      if (upcoming) {
-        setReminder({
-          title: `Interview at ${upcoming.company || "a company"}`,
-          date: upcoming.date,
-          time: upcoming.time || "",
-          company: upcoming.company || "",
-        });
+        setStats(computeStats(applications));
+        setUserName(`${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || user.username || "User");
+
+        const upcoming = applications.find((application) =>
+          ["interview", "interviewed", "interviewing"].includes(getStatusName(application)) && application.interview_date
+        );
+        const interviewNotifications = applications
+          .filter((application) =>
+            ["interview", "interviewed", "interviewing"].includes(getStatusName(application)) && application.interview_date
+          )
+          .map((application) => ({
+            id: application.id,
+            title: `Interview at ${application.company_name || "a company"}`,
+            date: application.interview_date,
+            jobTitle: application.job_title || "Job application",
+          }));
+
+        setNotifications(interviewNotifications);
+
+        if (upcoming) {
+          setReminder({
+            title: `Interview at ${upcoming.company_name || "a company"}`,
+            date: upcoming.interview_date,
+            time: "",
+            company: upcoming.company_name || "",
+          });
+        } else {
+          setReminder(null);
+        }
+      } catch (error) {
+        console.error("Failed to load dashboard:", error);
+        setStats({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
+        setReminder(null);
+        setNotifications([]);
       }
-    } catch {
-      setStats({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
-    }
+    };
+
+    fetchDashboard();
   }, []);
 
   const initials = userName.split(" ").map((n) => n[0]).join("");
@@ -161,11 +192,44 @@ export default function DashboardPage() {
       <header className="flex items-center justify-between px-8 py-5 bg-white border-b border-gray-100 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
         <div className="flex items-center gap-4">
-          <button className="relative p-2 rounded-full bg-amber-400 text-white hover:bg-amber-500 transition">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications((value) => !value)}
+              className="relative p-2 rounded-full bg-amber-400 text-white hover:bg-amber-500 transition"
+              title="Notifications"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-bold text-gray-900">Notifications</p>
+                  <p className="text-xs text-gray-400">Upcoming interview reminders</p>
+                </div>
+                {notifications.length > 0 ? (
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className="px-4 py-3 border-b border-gray-50 last:border-b-0">
+                        <p className="text-sm font-semibold text-gray-900">{notification.title}</p>
+                        <p className="text-xs text-gray-500 mt-1">{notification.jobTitle}</p>
+                        <p className="text-xs text-gray-400 mt-1">{notification.date}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="px-4 py-5 text-sm text-gray-400">No interview notifications.</p>
+                )}
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-2">
             <div className="w-8 h-8 rounded-full bg-slate-500 flex items-center justify-center text-white text-sm font-bold">
               {initials}

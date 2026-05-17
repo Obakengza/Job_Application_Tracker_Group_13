@@ -22,38 +22,108 @@ function ProfilePage() {
   });
 
   const [education, setEducation] = useState({
-    university: "North West University",
-    qualification: "Bsc Computer Science & Mathematics",
-    certificates: "Microsoft AI Fluency",
+    university: "",
+    qualification: "",
+    certificates: "",
   });
+
+  const getToken = () => localStorage.getItem("access");
+
+  const saveProfile = async (payload) => {
+    const response = await fetch("http://127.0.0.1:8000/api/profile/", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error("Could not save profile");
+    }
+
+    return response.json();
+  };
+
+  const handleSaveTop = async () => {
+    const [firstName, ...lastNameParts] = profile.name.trim().split(" ");
+    await saveProfile({
+      first_name: firstName || personal.firstName,
+      last_name: lastNameParts.join(" ") || personal.surname,
+      role: profile.role,
+      country: profile.location,
+    });
+    setPersonal({
+      ...personal,
+      firstName: firstName || personal.firstName,
+      surname: lastNameParts.join(" ") || personal.surname,
+      country: profile.location,
+    });
+    setIsEditingTop(false);
+  };
+
+  const handleSavePersonal = async () => {
+    await saveProfile({
+      first_name: personal.firstName,
+      last_name: personal.surname,
+      email: personal.email,
+      phone: personal.phone,
+      province: personal.province,
+      country: personal.country,
+      bio: personal.bio,
+    });
+    setProfile({
+      ...profile,
+      name: `${personal.firstName} ${personal.surname}`.trim(),
+      location: personal.country || profile.location,
+    });
+    setIsEditingPersonal(false);
+  };
+
+  const handleSaveEducation = async () => {
+    await saveProfile({
+      university: education.university,
+      qualification: education.qualification,
+      certificates: education.certificates,
+    });
+    setIsEditingEducation(false);
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const token = localStorage.getItem("access");
+        const token = getToken();
 
-        const response = await fetch("http://127.0.0.1:8000/api/auth/user/", {
+        const response = await fetch("http://127.0.0.1:8000/api/profile/", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         const data = await response.json();
+        const user = data.user || {};
 
         setProfile({
-          name: `${data.first_name} ${data.last_name}`,
-          role: "Job Seeker",
-          location: "South Africa",
+          name: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
+          role: data.role || "Job Seeker",
+          location: data.country || "South Africa",
         });
 
         setPersonal({
-          firstName: data.first_name,
-          surname: data.last_name,
-          email: data.email,
-          phone: "",
-          province: "",
-          country: "South Africa",
-          bio: "",
+          firstName: user.first_name || "",
+          surname: user.last_name || "",
+          email: user.email || "",
+          phone: data.phone || "",
+          province: data.province || "",
+          country: data.country || "South Africa",
+          bio: data.bio || "",
+        });
+
+        setEducation({
+          university: data.university || "",
+          qualification: data.qualification || "",
+          certificates: data.certificates || "",
         });
       } catch (error) {
         console.error(error);
@@ -164,7 +234,7 @@ function ProfilePage() {
 
             {isEditingTop ? (
               <button
-                onClick={() => setIsEditingTop(false)}
+                onClick={handleSaveTop}
                 className="bg-yellow-400 rounded-lg px-4 py-1 text-sm font-bold"
               >
                 Save
@@ -200,7 +270,7 @@ function ProfilePage() {
 
               {isEditingPersonal ? (
                 <button
-                  onClick={() => setIsEditingPersonal(false)}
+                  onClick={handleSavePersonal}
                   className="bg-yellow-400 rounded-lg px-4 py-1 text-sm font-bold"
                 >
                   Save
@@ -345,7 +415,7 @@ function ProfilePage() {
 
               {isEditingEducation ? (
                 <button
-                  onClick={() => setIsEditingEducation(false)}
+                  onClick={handleSaveEducation}
                   className="bg-yellow-400 rounded-lg px-4 py-1 text-sm font-bold"
                 >
                   Save

@@ -42,7 +42,7 @@ function AdminJobPosts() {
 
   const fetchPosts = async () => {
     try {
-      const data = await apiRequest("/job-posts/");
+      const data = await apiRequest("/job-posts/", { auth: false });
       setPosts(data);
     } catch (error) {
       console.error("Failed to fetch job posts:", error);
@@ -63,13 +63,14 @@ function AdminJobPosts() {
 
   const handleSave = async () => {
     if (!form.title && !form.job_title) return;
+    const salary = String(form.salary || "").replace(/[^\d.]/g, "");
 
     try {
       const payload = {
         job_title: form.title || form.job_title,
         company_name: form.company || form.company_name,
         location: form.location,
-        salary: form.salary,
+        salary: salary || null,
         employment_type: form.workType || form.employment_type,
         work_mode: form.workMode || form.work_mode,
         deadline_date: form.closes || form.deadline_date,
@@ -85,11 +86,13 @@ function AdminJobPosts() {
       if (editingPost) {
         await apiRequest(`/job-posts/${editingPost.id}/`, {
           method: "PATCH",
+          auth: false,
           body: JSON.stringify(payload),
         });
       } else {
         await apiRequest("/job-posts/", {
           method: "POST",
+          auth: false,
           body: JSON.stringify(payload),
         });
       }
@@ -109,9 +112,6 @@ function AdminJobPosts() {
     try {
       await fetch(`http://127.0.0.1:8000/api/job-posts/${id}/`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Token ${localStorage.getItem("token")}`,
-        },
       });
 
       await fetchPosts();
