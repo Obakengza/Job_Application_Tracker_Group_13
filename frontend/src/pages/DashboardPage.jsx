@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { apiRequest } from "../api";
-import { apiRequest } from "../api";
 
 const quickLinks = [
   {
