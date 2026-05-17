@@ -310,15 +310,13 @@ export default function JobPostsPage() {
   const handleApply = async (post) => {
     try {
       const statuses = await apiRequest("/statuses/");
-      let appliedStatus = statuses.find(
+      const appliedStatus = statuses.find(
         (status) => status.name.toLowerCase() === "applied",
       );
 
       if (!appliedStatus) {
-        appliedStatus = await apiRequest("/statuses/", {
-          method: "POST",
-          body: JSON.stringify({ name: "Applied" }),
-        });
+        alert("Applied status not found.");
+        return;
       }
 
       await apiRequest("/applications/", {
@@ -359,10 +357,10 @@ export default function JobPostsPage() {
   }).length;
 
   const STATS = [
-    { label: "Total Posts", value: totalPosts, bg: "#9fd4d4" },
-    { label: "Posted This Week", value: postedThisWeek, bg: "#a8dfc8" },
-    { label: "Applied To", value: applications.length, bg: "#f4c06a" },
-    { label: "Closing Soon", value: closingSoon, bg: "#f0a0a0" },
+    { label: "Total Posts",      value: totalPosts,          bg: "#9fd4d4" },
+    { label: "Posted This Week", value: postedThisWeek,      bg: "#a8dfc8" },
+    { label: "Applied To",       value: applications.length, bg: "#f4c06a" },
+    { label: "Closing Soon",     value: closingSoon,         bg: "#f0a0a0" },
   ];
 
   const filtered = posts.filter((p) => {
@@ -379,7 +377,7 @@ export default function JobPostsPage() {
 
   return (
     <div style={{ background: "#f4f6fb", minHeight: "100vh" }}>
-      {/* White title bar — matches Dashboard */}
+
       <div
         style={{
           background: "#fff",
@@ -389,6 +387,7 @@ export default function JobPostsPage() {
       >
         <h1
           style={{
+            fontFamily: "'Syne', sans-serif",
             fontSize: 26,
             fontWeight: 700,
             color: "#1a1f2e",
@@ -400,9 +399,8 @@ export default function JobPostsPage() {
         </h1>
       </div>
 
-      {/* Content area with padding — matches Dashboard card area */}
       <div style={{ padding: "32px 40px" }}>
-        {/* Stat cards — full color, no border, stacked label + number */}
+
         <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
           {STATS.map((s) => (
             <div
@@ -417,13 +415,7 @@ export default function JobPostsPage() {
                 gap: 8,
               }}
             >
-              <div
-                style={{
-                  fontSize: 13,
-                  color: "#1a1f2eaa",
-                  fontWeight: 500,
-                }}
-              >
+              <div style={{ fontSize: 13, color: "#1a1f2eaa", fontWeight: 500 }}>
                 {s.label}
               </div>
               <div
@@ -440,7 +432,6 @@ export default function JobPostsPage() {
           ))}
         </div>
 
-        {/* Search and filter row */}
         <div
           style={{
             display: "flex",
@@ -485,21 +476,6 @@ export default function JobPostsPage() {
             />
           </div>
 
-          <button
-            style={{
-              padding: "9px 16px",
-              border: "1.5px solid #eef0f5",
-              background: "#fff",
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 500,
-              color: "#8892a4",
-              cursor: "pointer",
-            }}
-          >
-            Filter
-          </button>
-
           <input
             value={locationFilter}
             onChange={(e) => setLocationFilter(e.target.value)}
@@ -517,7 +493,6 @@ export default function JobPostsPage() {
           />
         </div>
 
-        {/* Post cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.length > 0 ? (
             filtered.map((post) => (
@@ -537,7 +512,6 @@ export default function JobPostsPage() {
           )}
         </div>
 
-        {/* Pagination */}
         <div
           style={{
             display: "flex",
@@ -629,6 +603,7 @@ export default function JobPostsPage() {
             </svg>
           </button>
         </div>
+
       </div>
     </div>
   );
