@@ -5,15 +5,35 @@ function AdminLoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (form.email.trim() !== "admin@gmail.com" || form.password !== "cmpgadmin") {
       localStorage.removeItem("isAdmin");
       alert("Invalid admin email or password");
       return;
     }
 
-    localStorage.setItem("isAdmin", "true");
-    navigate("/admin/dashboard");
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/auth/admin-login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.email.trim(),
+          password: form.password,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Admin login failed");
+      }
+
+      localStorage.setItem("isAdmin", "true");
+      navigate("/admin/dashboard");
+    } catch (error) {
+      localStorage.removeItem("isAdmin");
+      alert("Could not save admin login in PostgreSQL.");
+    }
   };
 
   return (

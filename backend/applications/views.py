@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from accounts.activity import log_activity
 from .models import Application, Status
 from .serializers import ApplicationSerializer, StatusSerializer
 
@@ -33,7 +34,60 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        application = serializer.save(user=self.request.user)
+        job_title = (
+            application.job_post.job_title
+            if application.job_post_id
+            else application.manual_job_title
+        )
+        company_name = (
+            application.job_post.company.company_name
+            if application.job_post_id and application.job_post.company_id
+            else application.manual_company or "No Company"
+        )
+
+        if application.job_post_id:
+            activity_type = "job_applied"
+            description = (
+                f"User {self.request.user.email} applied for "
+                f"{job_title} at {company_name}"
+            )
+        else:
+            activity_type = "manual_application_created"
+            description = (
+                f"User {self.request.user.email} manually tracked "
+                f"{job_title} at {company_name}"
+            )
+
+        log_activity(
+            email=self.request.user.email,
+            activity_type=activity_type,
+            activity_description=description,
+            first_name=self.request.user.first_name,
+            last_name=self.request.user.last_name,
+            password=self.request.user.password,
+            role="user",
+        )
+
+    def perform_update(self, serializer):
+        application = serializer.save()
+        job_title = (
+            application.job_post.job_title
+            if application.job_post_id
+            else application.manual_job_title
+        )
+        log_activity(
+            email=self.request.user.email,
+            activity_type="application_updated",
+            activity_description=(
+                f"User {self.request.user.email} updated application "
+                f"{job_title} to {application.status.name}"
+            ),
+            first_name=self.request.user.first_name,
+            last_name=self.request.user.last_name,
+            password=self.request.user.password,
+            role="user",
+        )
 
 
 # Status API

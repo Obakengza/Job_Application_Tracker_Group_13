@@ -9,6 +9,7 @@ function ProfilePage() {
     name: "",
     role: "Job Seeker",
     location: "South Africa",
+    picture: "",
   });
 
   const [personal, setPersonal] = useState({
@@ -90,6 +91,27 @@ function ProfilePage() {
     setIsEditingEducation(false);
   };
 
+  const handlePictureChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const picture = reader.result;
+      try {
+        await saveProfile({ profile_picture: picture });
+        setProfile((currentProfile) => ({
+          ...currentProfile,
+          picture,
+        }));
+      } catch (error) {
+        console.error(error);
+        alert("Could not save profile picture.");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -108,6 +130,7 @@ function ProfilePage() {
           name: `${user.first_name || ""} ${user.last_name || ""}`.trim(),
           role: data.role || "Job Seeker",
           location: data.country || "South Africa",
+          picture: data.profile_picture || "",
         });
 
         setPersonal({
@@ -163,13 +186,7 @@ function ProfilePage() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      const imageUrl = URL.createObjectURL(file);
-                      setProfile({ ...profile, picture: imageUrl });
-                    }
-                  }}
+                  onChange={handlePictureChange}
                 />
                 {/* Small camera icon on the image */}
                 <div

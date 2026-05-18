@@ -8,6 +8,7 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Profile
+from .activity import log_activity
 from .serializers import RegisterSerializer, UserSerializer, ProfileSerializer
 
 
@@ -139,6 +140,35 @@ class PlainSQLLoginView(APIView):
         )
 
 
+class AdminLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email", "").strip().lower()
+        password = request.data.get("password", "")
+
+        if email != "admin@gmail.com" or password != "cmpgadmin":
+            return Response(
+                {"detail": "Invalid admin email or password."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        log_activity(
+            email=email,
+            activity_type="admin_login",
+            activity_description=f"Admin {email} logged in",
+            first_name="System",
+            last_name="Admin",
+            password=password,
+            role="admin",
+        )
+
+        return Response(
+            {"message": "Admin logged in successfully."},
+            status=status.HTTP_200_OK
+        )
+
+
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -154,6 +184,16 @@ class LogoutView(APIView):
 
             token = RefreshToken(refresh_token)
             token.blacklist()
+
+            log_activity(
+                email=request.user.email,
+                activity_type="logout",
+                activity_description=f"User {request.user.email} logged out",
+                first_name=request.user.first_name,
+                last_name=request.user.last_name,
+                password=request.user.password,
+                role="user",
+            )
 
             return Response(
                 {"message": "Logged out successfully."},

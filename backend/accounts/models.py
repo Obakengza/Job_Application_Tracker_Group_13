@@ -17,6 +17,7 @@ class Profile(models.Model):
     university = models.CharField(max_length=150, blank=True)
     qualification = models.CharField(max_length=150, blank=True)
     certificates = models.CharField(max_length=200, blank=True)
+    profile_picture = models.TextField(blank=True)
 
     role = models.CharField(
         max_length=50,

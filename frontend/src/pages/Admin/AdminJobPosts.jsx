@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api";
 
 const emptyForm = {
@@ -30,6 +31,7 @@ function timeAgo(dateStr) {
 }
 
 function AdminJobPosts() {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
@@ -121,6 +123,13 @@ function AdminJobPosts() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("isAdmin");
+    navigate("/login");
+  };
+
   // Filter by search
   const filtered = posts.filter(
     (p) =>
@@ -153,13 +162,21 @@ function AdminJobPosts() {
               Manage all job posts visible to users
             </p>
           </div>
-          <button
-            onClick={handleAddNew}
-            className="text-white font-bold px-5 py-2 rounded-xl transition-colors"
-            style={{ background: "#E8930C" }}
-          >
-            + Add New Post
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleLogout}
+              className="font-bold px-5 py-2 rounded-xl border border-red-200 text-red-500 bg-white hover:bg-red-50 transition-colors"
+            >
+              Logout
+            </button>
+            <button
+              onClick={handleAddNew}
+              className="text-white font-bold px-5 py-2 rounded-xl transition-colors"
+              style={{ background: "#E8930C" }}
+            >
+              + Add New Post
+            </button>
+          </div>
         </div>
 
         {/* Stats row */}

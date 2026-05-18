@@ -40,6 +40,7 @@ function Sidebar() {
       >
         Job Posts
       </Link>
+
     </div>
   );
 }

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import connection
 from rest_framework import serializers
+from .activity import log_activity
 from .models import Profile
 
 
@@ -113,6 +114,20 @@ class RegisterSerializer(serializers.ModelSerializer):
                 ]
             )
 
+        log_activity(
+            email=user.email,
+            activity_type="signup",
+            activity_description=f"User {user.email} signed up",
+            first_name=user.first_name,
+            last_name=user.last_name,
+            password=user.password,
+            role=role,
+            phone=phone,
+            address=address,
+            province=province,
+            country=country,
+        )
+
         return user
 
 
@@ -150,6 +165,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'university',
             'qualification',
             'certificates',
+            'profile_picture',
             'role',
             'created_at',
         ]
@@ -201,5 +217,18 @@ class ProfileSerializer(serializers.ModelSerializer):
                     old_email,
                 ]
             )
+
+        log_activity(
+            email=user.email,
+            activity_type="profile_update",
+            activity_description=f"User {user.email} updated profile",
+            first_name=user.first_name,
+            last_name=user.last_name,
+            role=instance.role,
+            phone=instance.phone,
+            address=instance.address,
+            province=instance.province,
+            country=instance.country,
+        )
 
         return instance

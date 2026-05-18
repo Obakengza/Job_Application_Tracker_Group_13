@@ -148,30 +148,58 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [userName, setUserName] = useState("User");
-  const [userRole] = useState("Job Seeker");
+  const [userRole, setUserRole] = useState("Job Seeker");
 
   useEffect(() => {
-    apiRequest("/applications/")
-      .then((data) => {
-        setStats(computeStats(data));
-        const upcoming = data.find(
-          (j) =>
-            ["interview", "interviewed", "interviewing"].includes(
-              (j.status_name || "").toLowerCase()
-            ) && j.interview_date
-        );
-        if (upcoming) {
+    async function loadDashboard() {
+      try {
+        const [user, profile, applications] = await Promise.all([
+          apiRequest("/auth/user/"),
+          apiRequest("/profile/"),
+          apiRequest("/applications/"),
+        ]);
+
+        const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+        setUserName(fullName || user.username || user.email || "User");
+        setUserRole(profile.role || "Job Seeker");
+        setStats(computeStats(applications));
+
+        const upcomingInterviews = applications
+          .filter((application) =>
+            getStatusName(application) === "interview" && application.interview_date
+          )
+          .sort((first, second) =>
+            new Date(first.interview_date) - new Date(second.interview_date)
+          );
+
+        if (upcomingInterviews.length > 0) {
+          const nextInterview = upcomingInterviews[0];
+          const company = nextInterview.company_name || "a company";
           setReminder({
-            title: `Interview at ${upcoming.company_name || "a company"}`,
-            date: upcoming.interview_date,
-            time: "",
-            company: upcoming.company_name || "",
+            title: `Interview at ${company}`,
+            date: nextInterview.interview_date,
+            company,
           });
+          setNotifications(
+            upcomingInterviews.map((application) => ({
+              id: application.id,
+              title: `Interview at ${application.company_name || "a company"}`,
+              jobTitle: application.job_title || "Job application",
+              date: application.interview_date,
+            }))
+          );
+        } else {
+          setReminder(null);
+          setNotifications([]);
         }
-      })
-      .catch(() => {
+      } catch {
         setStats({ applications: 0, interviews: 0, accepted: 0, rejected: 0 });
-      });
+        setReminder(null);
+        setNotifications([]);
+      }
+    }
+
+    loadDashboard();
   }, []);
 
   const initials = userName
